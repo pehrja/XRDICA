@@ -1,0 +1,65 @@
+<!-- Copyright (c) 2025 Pehr Jansson. All rights reserved. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Xrdica</title>
+  <link rel="stylesheet" href="style.css?v=2" />
+</head>
+<body>
+
+  <header>
+    <h1 id="game-title">XRDICA</h1>
+    <p id="game-subtitle" style="display:none"></p>
+    <div id="score">Score: <span id="score-value">0</span></div>
+    <button id="pause-btn" onclick="togglePause()">⏸ Pause</button>
+    <button id="reset-btn" onclick="resetGuesses()">↺ Clear</button>
+    <button id="mode-btn" onclick="toggleMode()">⚄ Random</button>
+    <button id="about-btn" onclick="toggleAbout()">?</button>
+  </header>
+
+  <!-- About modal -->
+  <div id="about-overlay" onclick="toggleAbout()">
+    <div id="about-modal" onclick="event.stopPropagation()">
+      <button id="about-close" onclick="toggleAbout()">✕</button>
+      <h2>How to Play XRDICA</h2>
+      <p>XRDICA is a word-decoding puzzle. Each letter of the alphabet has been assigned a random number — your job is to figure out which number maps to which letter.</p>
+
+      <h3>The Grid</h3>
+      <p>The puzzle presents several rows, each containing a hidden word. Every tile shows a number — the <strong>cipher</strong> for the letter in that position. The same number always means the same letter, everywhere in the grid.</p>
+
+      <h3>Making Guesses</h3>
+      <p>Click any tile to select it (it will be highlighted), then type a letter to enter your guess. Your guess appears above the cipher number. Use the <strong>arrow keys</strong> to move between tiles, and <strong>Backspace</strong> to clear and step back.</p>
+      <p>You can only work on one row at a time. If you move to a different row, your uncommitted guesses on the previous row are cleared.</p>
+
+      <h3>Submitting a Guess</h3>
+      <p>When every tile in a row has a letter entered, the <strong>GUESS</strong> button lights up. Press it (or hit Enter) to check your answer:</p>
+      <ul>
+        <li><strong>Green tiles</strong> — correct! Those letters are locked in and will appear throughout the grid wherever that cipher appears.</li>
+        <li><strong>Red tiles</strong> — incorrect. Your next action will clear them so you can try again.</li>
+      </ul>
+
+      <h3>Strategy</h3>
+      <p>Because the same cipher always means the same letter, solving one word gives you clues about all the others. If you think a letter might be right for a particular cipher, type it in — if it only maps to one cipher in your current row, it will appear as a faint hint in the other rows too.</p>
+
+      <h3>Scoring</h3>
+      <p>Lower is better. You score one point for each letter key or backspace pressed, and one point every five seconds. Correct guesses on a GUESS deduct one point each — so thinking before you type pays off.</p>
+
+      <h3>New Rows</h3>
+      <p>Every 60 points, a new word is added to the bottom of the grid, up to a maximum of 10 rows. The puzzle is complete when all rows are solved.</p>
+      <p><em>Good luck!</em></p>
+    </div>
+  </div>
+
+  <main>
+    <div id="grid"></div>
+    <div id="keyboard"></div>
+  </main>
+
+  <script src="loader.js"></script>
+  <script src="words.js"></script>
+  <script src="game.js"></script>
+
+</body>
+</html>

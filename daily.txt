@@ -1,0 +1,21 @@
+#mode: static
+#title-reveal: Climate Words
+#author: Xrdica
+#subtitle: Puzzle for
+#alphabet: abcdefghijklmnopqrstuvwxyz
+#start-lines: 2
+#max-lines: 12
+#penalty: 1
+
+unleashed
+blistering
+haphazard
+temperature
+existential
+government
+exacerbate
+greenhouse
+preparedness
+adaptation
+efficiency
+disorganized

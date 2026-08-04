@@ -1,0 +1,20 @@
+#mode: static
+#title-reveal: Democracy in America
+#author: Alexis de Tocqueville
+#subtitle: Puzzle for
+#alphabet: abcdefghijklmnopqrstuvwxyz
+
+Amongst the novel objects that attracted
+my attention during my stay in the
+United States, nothing struck me more
+forcibly than the general equality of conditions.
+I readily discovered the prodigious influence
+which this primary fact exercises on
+the whole course of society, by giving
+a certain direction to public opinion,
+and a certain tenor to the laws.
+I speedily perceived that the influence
+of this fact extends far beyond the
+political character and the laws of the country,
+and that it has no less empire over
+civil society than over the Government.

@@ -1,0 +1,405 @@
+/* Copyright (c) 2025 Pehr Jansson. All rights reserved. */
+
+/* ── Reset & base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #fff;
+  color: #111;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  height: 100vh;
+  max-height: 100vh;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 16px 24px;
+}
+
+/* ── Header ── */
+header {
+  text-align: center;
+  border-bottom: 2px solid #ddd;
+  width: 100%;
+  max-width: 900px;
+  padding-bottom: 12px;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #111;
+}
+
+/* ── Subtitle ── */
+#game-subtitle {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 4px;
+  letter-spacing: 0.05em;
+}
+
+/* ── Score display ── */
+#score {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #888;
+  margin-top: 6px;
+  letter-spacing: 0.05em;
+}
+
+#score-value {
+  color: #111;
+  font-weight: 700;
+}
+
+/* ── Final score ── */
+#score.final {
+  font-size: 1.1rem;
+  color: #111;
+  margin-top: 8px;
+  letter-spacing: 0.08em;
+  animation: pulse 1.5s ease infinite;
+}
+
+.final-value {
+  color: #538d4e;
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+/* ── Grid ── */
+#grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 4px 0 4px 0;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Row wrapper ── */
+.row-wrap {
+  display: flex;
+  flex-direction: row !important;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 10px;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  align-items: center;
+}
+
+/* ── Tiles ── */
+:root {
+  --tile-size: 52px;
+  --tile-font: 1.1rem;
+  --cipher-font: 0.75rem;
+}
+
+.tile {
+  width: var(--tile-size);
+  height: var(--tile-size);
+  border: 2px solid #ccc;
+  background: #fff;
+  color: #111;
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  text-transform: uppercase;
+  user-select: none;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  line-height: 1.1;
+  flex-shrink: 0;
+}
+
+/* Active tile */
+.tile.active {
+  border-color: #333;
+  box-shadow: 0 0 0 2px #3334;
+}
+
+/* Same-cipher highlight */
+.tile.same-cipher {
+  border-color: #e07820;
+  background: #fff3e0;
+}
+
+/* Locked correct tile */
+.tile.correct {
+  background: #538d4e;
+  border-color: #538d4e;
+  color: #fff;
+}
+
+/* Wrong tile */
+.tile.wrong {
+  background: #b03030;
+  border-color: #b03030;
+  color: #fff;
+}
+
+/* ── Cipher number inside tile ── */
+.tile .cipher {
+  font-size: var(--cipher-font);
+  font-weight: 800;
+  opacity: 0.75;
+  line-height: 1;
+}
+
+/* ── Guessed letter inside tile ── */
+.tile .letter {
+  font-size: var(--tile-font);
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* ── Hint letter ── */
+.tile .hint {
+  font-size: var(--tile-font);
+  font-weight: 800;
+  line-height: 1;
+  opacity: 0.35;
+}
+
+/* ── GUESS button ── */
+.guess-btn {
+  height: 52px;
+  padding: 0 16px;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  background: #eee;
+  color: #aaa;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: not-allowed;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.guess-btn:not(:disabled) {
+  background: #538d4e;
+  border-color: #538d4e;
+  color: #fff;
+  cursor: pointer;
+}
+
+.guess-btn:not(:disabled):hover {
+  filter: brightness(1.1);
+}
+
+/* ── Pause, Reset and Mode buttons ── */
+#pause-btn, #reset-btn, #mode-btn {
+  margin-top: 8px;
+  padding: 6px 20px;
+  background: transparent;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #888;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+#pause-btn:hover, #reset-btn:hover, #mode-btn:hover {
+  border-color: #333;
+  color: #333;
+}
+
+/* ── Paused grid ── */
+#grid.paused .tile {
+  color: transparent !important;
+  border-color: transparent !important;
+  background: #eee !important;
+  pointer-events: none;
+}
+
+#grid.paused .tile.correct {
+  background: #c8e6c8 !important;
+}
+
+#grid.paused .tile.wrong {
+  background: #f5c0c0 !important;
+}
+
+#grid.paused .guess-btn {
+  visibility: hidden !important;
+}
+
+/* ── About button ── */
+#about-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  background: transparent;
+  color: #888;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+#about-btn:hover {
+  border-color: #333;
+  color: #333;
+}
+
+/* ── About overlay ── */
+#about-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #0004;
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+
+#about-modal {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  color: #000;
+}
+
+#about-modal h2 {
+  font-size: 1.3rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 16px;
+  color: #000;
+}
+
+#about-modal h3 {
+  font-size: 0.95rem;
+  color: #2d6e28;
+  margin: 20px 0 6px;
+  letter-spacing: 0.05em;
+}
+
+#about-modal p {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #222;
+  margin-bottom: 8px;
+}
+
+#about-modal ul {
+  padding-left: 20px;
+  margin-bottom: 8px;
+}
+
+#about-modal li {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #222;
+  margin-bottom: 4px;
+}
+
+#about-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+#about-close:hover { color: #000; }
+
+/* ── On-screen keyboard ── */
+#keyboard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  user-select: none;
+}
+
+.kb-row {
+  display: flex;
+  gap: 5px;
+}
+
+.key {
+  height: 52px;
+  min-width: 36px;
+  padding: 0 6px;
+  border: none;
+  border-radius: 4px;
+  background: #bbb;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.key.wide { min-width: 56px; font-size: 0.72rem; }
+.key:active { filter: brightness(0.85); }
+.key.key-correct { background: #538d4e; }
+
+/* ── Word space ── */
+.word-space {
+  width: 16px;
+  flex-shrink: 0;
+}
+
+/* ── Punctuation marker ── */
+.punct-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #555;
+  min-width: 10px;
+  flex-shrink: 0;
+  padding: 0 1px;
+}
+
+/* ── Revealed title/author at game over ── */
+#game-subtitle.revealed {
+  color: #538d4e;
+  font-size: 1rem;
+  font-weight: 600;
+  animation: pulse 1.5s ease infinite;
+}

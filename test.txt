@@ -1,0 +1,15 @@
+#mode: static
+#title-reveal: Test Puzzle
+#author: Xrdica Debug
+#subtitle: Test for
+#alphabet: abcdefghijklmnopqrstuvwxyz
+#cipher: abcdefghijklmnopqrstuvwxyz
+
+bridge
+flower
+planet
+castle
+frozen
+jungle
+wisdom
+copper

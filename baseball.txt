@@ -1,0 +1,21 @@
+#mode: static
+#title-reveal: Famous Baseball Players
+#author: Xrdica
+#subtitle: Puzzle for
+#alphabet: abcdefghijklmnopqrstuvwxyz
+#start-lines: 3
+#max-lines: 12
+#penalty: 2
+
+Babe Ruth
+Willie Mays
+Hank Aaron
+Ted Williams
+Mickey Mantle
+Jackie Robinson
+Lou Gehrig
+Sandy Koufax
+Roberto Clemente
+Cy Young
+Rogers Hornsby
+Nolan Ryan
