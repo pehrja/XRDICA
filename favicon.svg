@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Row 1: red white green white red -->
+  <rect x="1"  y="1"  width="11" height="11" rx="2" fill="#b03030" stroke="#b03030" stroke-width="1"/>
+  <rect x="14" y="1"  width="11" height="11" rx="2" fill="white" stroke="#ccc" stroke-width="1"/>
+  <rect x="27" y="1"  width="11" height="11" rx="2" fill="#538d4e" stroke="#538d4e" stroke-width="1"/>
+  <rect x="40" y="1"  width="11" height="11" rx="2" fill="white" stroke="#ccc" stroke-width="1"/>
+  <rect x="53" y="1"  width="11" height="11" rx="2" fill="#b03030" stroke="#b03030" stroke-width="1"/>
+  <!-- Row 2: white green white red white -->
+  <rect x="1"  y="14" width="11" height="11" rx="2" fill="white" stroke="#ccc" stroke-width="1"/>
+  <rect x="14" y="14" width="11" height="11" rx="2" fill="#538d4e" stroke="#538d4e" stroke-width="1"/>
+  <rect x="27" y="14" width="11" height="11" rx="2" fill="white" stroke="#ccc" stroke-width="1"/>
+  <rect x="40" y="14" width="11" height="11" rx="2" fill="#b03030" stroke="#b03030" stroke-width="1"/>
+  <rect x="53" y="14" width="11" height="11" rx="2" fill="white" stroke="#ccc" stroke-width="1"/>
+  <!-- Row 3: green white red white green -->
+  <rect x="1"  y="27" width="11" height="11" rx="2" fill="#538d4e" stroke="#538d4e" stroke-width="1"/>
+  <rect x="14" y="27" width="11" height="11" rx="2" fill="white" stroke="#ccc" stroke-width="1"/>
+  <rect x="27" y="27" width="11" height="11" rx="2" fill="#b03030" stroke="#b03030" stroke-width="1"/>
+  <rect x="40" y="27" width="11" height="11" rx="2" fill="white" stroke="#ccc" stroke-width="1"/>
+  <rect x="53" y="27" width="11" height="11" rx="2" fill="#538d4e" stroke="#538d4e" stroke-width="1"/>
+  <!-- Row 4: white red white green red -->
+  <rect x="1"  y="40" width="11" height="11" rx="2" fill="white" stroke="#ccc" stroke-width="1"/>
+  <rect x="14" y="40" width="11" height="11" rx="2" fill="#b03030" stroke="#b03030" stroke-width="1"/>
+  <rect x="27" y="40" width="11" height="11" rx="2" fill="white" stroke="#ccc" stroke-width="1"/>
+  <rect x="40" y="40" width="11" height="11" rx="2" fill="#538d4e" stroke="#538d4e" stroke-width="1"/>
+  <rect x="53" y="40" width="11" height="11" rx="2" fill="#b03030" stroke="#b03030" stroke-width="1"/>
+  <!-- Row 5: green red white white green -->
+  <rect x="1"  y="53" width="11" height="11" rx="2" fill="#538d4e" stroke="#538d4e" stroke-width="1"/>
+  <rect x="14" y="53" width="11" height="11" rx="2" fill="#b03030" stroke="#b03030" stroke-width="1"/>
+  <rect x="27" y="53" width="11" height="11" rx="2" fill="white" stroke="#ccc" stroke-width="1"/>
+  <rect x="40" y="53" width="11" height="11" rx="2" fill="white" stroke="#ccc" stroke-width="1"/>
+  <rect x="53" y="53" width="11" height="11" rx="2" fill="#538d4e" stroke="#538d4e" stroke-width="1"/>
+</svg>

@@ -2,12 +2,12 @@
 #title-reveal: Climate Words
 #author: Xrdica
 #subtitle: Puzzle for
-#alphabet: abcdefghijklmnopqrstuvwxyz
+#alphabet: abcdefghijklmnopqrstuvwxyz-
 #start-lines: 2
 #max-lines: 12
 #penalty: 1
 
-unleashed
+air-conditioning
 blistering
 haphazard
 temperature

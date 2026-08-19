@@ -1,0 +1,24 @@
+#mode: static
+#title-reveal: Birds
+#author: Xrdica
+#alphabet: \ abcdefghijklmnopqrstuvwxyz
+#start-lines: 5
+#max-lines: 16
+#penalty: 2
+
+oyster catcher
+mourning dove
+mockingbird
+titmouse
+starling
+hummingbird
+chickadee
+wood duck
+swallow
+blue jay
+cardinal
+egret
+heron
+robin
+wren
+finch

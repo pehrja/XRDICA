@@ -1,4 +1,5 @@
 /* Copyright (c) 2025 Pehr Jansson. All rights reserved. */
+/* XRDICA v0.0.22 */
 
 /* ── Reset & base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -33,6 +34,14 @@ h1 {
   font-weight: 800;
   letter-spacing: 0.15em;
   color: #111;
+}
+
+#game-title {
+  cursor: pointer;
+}
+
+#game-title:hover {
+  color: #555;
 }
 
 /* ── Subtitle ── */
@@ -151,6 +160,14 @@ h1 {
   color: #fff;
 }
 
+/* Locked correct SPACE tile — lighter green so the blank is visible
+   against the row instead of reading as an empty gap */
+.tile.correct.space-tile {
+  background: #a8d5a2;
+  border-color: #7cb873;
+  color: #1a3d17;
+}
+
 /* Wrong tile */
 .tile.wrong {
   background: #b03030;
@@ -209,8 +226,8 @@ h1 {
   filter: brightness(1.1);
 }
 
-/* ── Pause, Reset and Mode buttons ── */
-#pause-btn, #reset-btn, #mode-btn {
+/* ── Header buttons ── */
+#pause-btn, #random-btn, #archive-btn, #share-btn {
   margin-top: 8px;
   padding: 6px 20px;
   background: transparent;
@@ -224,9 +241,19 @@ h1 {
   transition: border-color 0.2s, color 0.2s;
 }
 
-#pause-btn:hover, #reset-btn:hover, #mode-btn:hover {
+#pause-btn:hover, #random-btn:hover, #archive-btn:hover, #share-btn:hover {
   border-color: #333;
   color: #333;
+}
+
+#share-btn {
+  border-color: #538d4e;
+  color: #2e7d32;
+}
+
+#share-btn:hover {
+  background: #538d4e;
+  color: #fff;
 }
 
 /* ── Paused grid ── */
@@ -377,6 +404,37 @@ h1 {
 .key:active { filter: brightness(0.85); }
 .key.key-correct { background: #538d4e; }
 
+/* ── Dedicated spacebar row (shown only when a puzzle's alphabet
+   includes space as a cipher token) ── */
+.kb-row-space {
+  justify-content: center;
+}
+
+.key-space {
+  flex: 1 1 auto;
+  max-width: 320px;
+  letter-spacing: 0.15em;
+}
+
+/* ── Note shown above the grid when a puzzle hides spaces ── */
+#space-note {
+  font-size: 0.8rem;
+  color: #888;
+  text-align: center;
+  max-width: 480px;
+  margin: 0 auto 8px auto;
+  line-height: 1.3;
+}
+
+#max-rows-note {
+  font-size: 0.8rem;
+  color: #888;
+  text-align: center;
+  max-width: 480px;
+  margin: 4px auto 0 auto;
+  line-height: 1.3;
+}
+
 /* ── Word space ── */
 .word-space {
   width: 16px;
@@ -403,3 +461,308 @@ h1 {
   font-weight: 600;
   animation: pulse 1.5s ease infinite;
 }
+
+
+/* ── Puzzle number shown at game over ── */
+.puzzle-number {
+  font-size: 0.85rem;
+  color: #888;
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+/* ── Time/guess score breakdown shown at game over ── */
+.score-breakdown, .rows-used {
+  font-size: 0.85rem;
+  color: #888;
+  font-weight: 400;
+}
+
+/* ── Puzzle number modal ── */
+#puzzle-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #0004;
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+
+#puzzle-modal {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 32px;
+  max-width: 320px;
+  width: 90%;
+  text-align: center;
+}
+
+#puzzle-modal h2 {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+  color: #111;
+}
+
+#puzzle-modal p {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+#puzzle-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1.2rem;
+  text-align: center;
+  margin-bottom: 16px;
+  color: #111;
+}
+
+#puzzle-input.error {
+  border-color: #b03030;
+  background: #fff0f0;
+}
+
+#puzzle-modal-btns {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+#puzzle-modal-btns button {
+  padding: 8px 24px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background: transparent;
+  color: #888;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+#puzzle-confirm-btn {
+  background: #538d4e !important;
+  border-color: #538d4e !important;
+  color: #fff !important;
+}
+
+#puzzle-modal-btns button:hover {
+  filter: brightness(0.9);
+}
+
+/* ── Version footer ── */
+#version {
+  position: fixed;
+  bottom: 4px;
+  right: 8px;
+  font-size: 0.65rem;
+  color: #ccc;
+  pointer-events: none;
+}
+
+/* ── Random modal ── */
+#random-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #0004;
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+
+#random-modal {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 28px;
+  max-width: 280px;
+  width: 90%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#random-modal h2 {
+  font-size: 1.1rem;
+  color: #111;
+  margin-bottom: 4px;
+}
+
+.random-option-btn {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #f5f5f5;
+  color: #111;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.random-option-btn:hover {
+  background: #e8e8e8;
+}
+
+#random-cancel-btn {
+  padding: 8px;
+  border: none;
+  background: transparent;
+  color: #888;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* ── Clear key (in keyboard, hidden until needed) ── */
+#clear-btn {
+  background: #d9534f !important;
+  color: #fff !important;
+}
+
+#clear-btn:hover {
+  filter: brightness(0.9);
+}
+
+/* ── Archive modal ── */
+#archive-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #0004;
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+
+#archive-modal {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 340px;
+  width: 90%;
+  text-align: center;
+}
+
+#archive-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+#archive-month-label {
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+}
+
+#archive-prev, #archive-next {
+  background: transparent;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+#archive-prev:hover, #archive-next:hover { background: #f0f0f0; }
+#archive-prev:disabled, #archive-next:disabled { opacity: 0.3; cursor: default; }
+
+#archive-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+#archive-weekdays span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #aaa;
+  letter-spacing: 0.04em;
+  padding: 4px 0;
+}
+
+#archive-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 16px;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.cal-empty    { }
+.cal-future   { color: #ddd; }
+.cal-unavailable { color: #ccc; }
+.cal-checking { color: #ccc; }
+
+.cal-auto {
+  color: #aaa;
+  cursor: pointer;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+}
+
+.cal-auto:hover { background: #f5f5f5; color: #555; }
+
+.cal-available {
+  background: #e8f5e9;
+  color: #2e7d32;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.cal-available:hover { background: #538d4e; color: #fff; }
+
+.cal-today {
+  background: #111;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.cal-today:hover { background: #333; }
+
+#archive-footer {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+#archive-close-btn, #archive-daily-btn {
+  padding: 8px 24px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: transparent;
+  color: #888;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+#archive-close-btn:hover, #archive-daily-btn:hover { border-color: #333; color: #333; }
+
+#archive-daily-btn {
+  border-color: #538d4e;
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+#archive-daily-btn:hover { background: #538d4e; color: #fff; }
+

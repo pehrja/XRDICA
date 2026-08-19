@@ -1,5 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
+// XRDICA v0.0.22
 
 // ── Word list loader ──
 // Fetches a .txt word list file and parses metadata headers.
@@ -9,10 +10,19 @@
 //   #title: display title (replaces XRDICA)
 //   #subtitle: optional subtitle
 //   #alphabet: explicit alphabet string (e.g. abcdefghijklmnopqrstuvwxyzåäö)
+//              a leading "\ " (backslash + space) adds SPACE itself as a
+//              cipher token, e.g. "#alphabet: \ abcdefghijklmnopqrstuvwxyz"
+//              — this lets a puzzle line hide multi-word answers where the
+//              space between words must also be solved (e.g. "ICE CREAM").
+//              The backslash escapes the character right after it into the
+//              alphabet; any other unescaped whitespace in the value is
+//              ignored so stray spaces from formatting don't sneak in.
 //   #cipher: fixed letter order for debugging (e.g. abcdefghijklmnopqrstuvwxyz = a:1, b:2 ...)
-//   #rows: initial number of rows in random mode (default 5)
+//   #rows: initial number of rows in random mode (default/floor 4 — never lower, see MIN_INITIAL_ROWS below)
 //   #max-rows: maximum rows in random mode (default 10)
-//   #interval: score points between new rows in random mode (default 60)
+//   #start-lines: initial number of rows in static mode (default/floor 4, same as #rows)
+//   #max-lines: maximum rows in static mode (default 12)
+//   #interval: score points between new rows in random mode (default 50)
 //   #penalty: score penalty per incorrect guess on GUESS (default 2)
 //
 // Words are filtered to contain only letters in the alphabet (or a-z if no
@@ -20,6 +30,9 @@
 // are rejected unless #alphabet explicitly includes them.
 
 const DEFAULT_WORDLIST = 'wordlist.txt';
+const MIN_INITIAL_ROWS = 4; // never show fewer than this many rows at puzzle start —
+                             // solving fewer this fast is vanishingly unlikely and
+                             // treated as a sign something's off, not good play
 
 // Accent → base letter map for display normalization
 const ACCENT_MAP = {
@@ -38,7 +51,38 @@ function stripAccents(str) {
   return str.split('').map(ch => ACCENT_MAP[ch] || ch).join('');
 }
 
+// ── Parse a raw #alphabet value into an array of cipher tokens ──
+// A backslash escapes the next character into the alphabet as a literal
+// token — this is how a space gets included ("\ " → the space token).
+// Any other unescaped whitespace is treated as a separator and dropped,
+// so accidental double spaces or trailing spaces don't become tokens.
+function parseAlphabetTokens(raw) {
+  const tokens = [];
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i];
+    if (ch === '\\' && i + 1 < raw.length) {
+      tokens.push(raw[i + 1]);
+      i++; // consume the escaped character too
+    } else if (ch === ' ') {
+      continue; // unescaped whitespace — not a token
+    } else {
+      tokens.push(ch);
+    }
+  }
+  return tokens;
+}
+
 // Parse the word list file and return a config object
+// ── Parse word list from already-fetched text ──
+async function parseWordListText(text) {
+  // Re-use loadWordList logic by creating a blob URL
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url  = URL.createObjectURL(blob);
+  const result = await loadWordList(url);
+  URL.revokeObjectURL(url);
+  return result;
+}
+
 async function loadWordList(filename) {
   filename = filename || DEFAULT_WORDLIST;
 
@@ -56,12 +100,14 @@ async function loadWordList(filename) {
     subtitle:    null,
     alphabet:    null,
     cipher:      null,   // explicit letter order for fixed mapping
-    rows:        5,
+    rows:        MIN_INITIAL_ROWS,
     maxRows:     10,
-    startLines:  1,    // static mode: initial number of lines shown
+    startLines:  MIN_INITIAL_ROWS, // static mode: initial number of lines shown
     maxLines:    12,   // static mode: maximum number of lines shown
-    interval:    60,
+    interval:    50,
     penalty:     2,    // score penalty per incorrect guess
+    minLength:   5,    // minimum word length in random mode
+    maxLength:   10,   // maximum word length in random mode
   };
 
   const words = [];
@@ -78,13 +124,15 @@ async function loadWordList(filename) {
         case 'title-reveal': meta.titleReveal = value; break;
         case 'author':       meta.author      = value; break;
         case 'subtitle':     meta.subtitle    = value; break;
-        case 'alphabet':     meta.alphabet    = value.toLowerCase(); break;
+        case 'alphabet':     meta.alphabet    = value; break; // raw — parsed below (may contain \ escape)
         case 'cipher':      meta.cipher      = value.toLowerCase(); break;
-        case 'rows':         meta.rows        = parseInt(value) || 5; break;
+        case 'rows':         meta.rows        = Math.max(MIN_INITIAL_ROWS, parseInt(value) || MIN_INITIAL_ROWS); break;
         case 'max-rows':     meta.maxRows     = parseInt(value) || 10; break;
-        case 'interval':     meta.interval    = parseInt(value) || 60; break;
+        case 'interval':     meta.interval    = parseInt(value) || 50; break;
         case 'penalty':      meta.penalty     = parseInt(value) ?? 2; break;
-        case 'start-lines':  meta.startLines  = parseInt(value) || 1; break;
+        case 'min-length':   meta.minLength   = parseInt(value) || 5; break;
+        case 'max-length':   meta.maxLength   = parseInt(value) || 10; break;
+        case 'start-lines':  meta.startLines  = Math.max(MIN_INITIAL_ROWS, parseInt(value) || MIN_INITIAL_ROWS); break;
         case 'max-lines':    meta.maxLines    = parseInt(value) || 12; break;
       }
     } else {
@@ -94,12 +142,19 @@ async function loadWordList(filename) {
     }
   }
 
+  // ── Parse #alphabet into tokens (handles the \ escape for space) ──
+  // Letters are lowercased; the space token is left as-is.
+  let alphabetTokens = null;
+  if (meta.alphabet) {
+    alphabetTokens = parseAlphabetTokens(meta.alphabet).map(ch => ch === ' ' ? ch : ch.toLowerCase());
+  }
+
   // ── Determine valid character set ──
-  // If #alphabet is given, use it exactly — every character in it is a cipher token.
+  // If #alphabet is given, use it exactly — every token in it is a cipher token.
   // Otherwise default to a-z only.
   let validChars;
-  if (meta.alphabet) {
-    validChars = new Set(meta.alphabet.split(''));  // includes any non-letter chars like -
+  if (alphabetTokens) {
+    validChars = new Set(alphabetTokens);  // includes any non-letter tokens like - or space
   } else {
     validChars = new Set('abcdefghijklmnopqrstuvwxyz');
   }
@@ -123,8 +178,8 @@ async function loadWordList(filename) {
   // Only characters explicitly in validChars are cipher tokens.
   // Accent-stripped characters map to their base letter's cipher.
   let cipherAlphabet;
-  if (meta.alphabet) {
-    cipherAlphabet = meta.alphabet.split('');
+  if (alphabetTokens) {
+    cipherAlphabet = alphabetTokens;
   } else {
     // Discover from filtered words — only count letter characters
     const charSet = new Set();

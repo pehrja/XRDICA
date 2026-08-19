@@ -1,0 +1,14 @@
+#mode: static
+#title-reveal: Space Token Test
+#author: Xrdica
+#alphabet: \ abcdefghijklmnopqrstuvwxyz
+#start-lines: 3
+#max-lines: 6
+#penalty: 2
+
+wood duck
+ice cream
+home run
+dark horse
+brussels sprout
+peanut butter
