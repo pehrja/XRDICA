@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
-// XRDICA v0.0.23
+// XRDICA v0.0.27
 
 // ── Game state ──
 let WORD_LIST     = [];
@@ -367,7 +367,10 @@ function restoreProgress(saved) {
     savedRow.tiles.forEach((savedTile, c) => {
       const tile = tileEls[c];
       if (savedTile.guess) tile.dataset.guess = savedTile.guess;
-      if (savedTile.locked) tile.dataset.locked = true;
+      if (savedTile.locked) {
+        tile.dataset.locked = true;
+        tile.classList.add('correct'); // drives the green styling — dataset.locked alone doesn't
+      }
       renderTile(tile);
     });
     if (savedRow.solved) rowEls[r].dataset.solved = 'true';
@@ -998,7 +1001,15 @@ function checkGameOver() {
 // ── Share result (copies a short shareable summary to the clipboard) ──
 function shareResult() {
   const label = PUZZLE_LABEL || 'XRDICA';
-  const text = `XRDICA — ${label}\nSolved in ${totalRows} row${totalRows === 1 ? '' : 's'} · Score ${score}\nxrdica.com`;
+  const maxRows = GAME_MODE === 'random' ? MAX_ROWS : STATIC_MAX;
+  const filled = Math.min(totalRows, maxRows);
+  const empty = Math.max(maxRows - filled, 0);
+  // Array.from (not .split('')) — these square emoji are outside the BMP
+  // (surrogate pairs in UTF-16), so a plain split would corrupt them.
+  const tileBar = Array.from(
+    '🟩'.repeat(filled) + '⬜'.repeat(empty)
+  ).join('\u2009'); // thin space between tiles — a full space reads too wide
+  const text = `XRDICA — ${label}\n${tileBar}\nScore ${score}\nxrdica.com`;
 
   const btn = document.getElementById('share-btn');
   const originalText = btn ? btn.textContent : null;
