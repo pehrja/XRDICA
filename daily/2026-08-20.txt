@@ -1,0 +1,25 @@
+#mode: static
+#title-reveal: American States, Commonwealths, and Territories
+#author: Xrdica
+#date: 08172026
+#alphabet: \ abcdefghijklmnopqrstuvwxyz
+#start-lines: 4
+#max-lines: 15
+#penalty: 2
+
+Florida
+New Mexico
+Vermont
+Guam
+Mississippi 
+Connecticut
+Virginia
+Alabama
+US Virgin Islands
+Arizona
+Texas
+Puerto Rico
+Georgia
+Hawaii
+Alaska
+
