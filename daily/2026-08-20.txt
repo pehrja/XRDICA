@@ -1,7 +1,7 @@
 #mode: static
 #title-reveal: Crayola Colors
 #author: Xrdica
-#alphabet: \ abcdefghijklmnopqrstuvwxyz
+#alphabet: abcdefghijklmnopqrstuvwxyz
 #start-lines: 4
 #max-lines: 15
 #penalty: 2
