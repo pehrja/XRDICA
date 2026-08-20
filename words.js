@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
-// XRDICA v0.0.27
+// XRDICA v0.0.29
 
 // ── Core word and cipher utilities ──
 // These functions operate on the data returned by loader.js.

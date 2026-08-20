@@ -1,5 +1,5 @@
 /* Copyright (c) 2025 Pehr Jansson. All rights reserved. */
-/* XRDICA v0.0.27 */
+/* XRDICA v0.0.29 */
 
 /* ── Reset & base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -227,7 +227,7 @@ h1 {
 }
 
 /* ── Header buttons ── */
-#pause-btn, #random-btn, #archive-btn, #share-btn {
+#pause-btn, #random-btn, #archive-btn, #share-btn, #daily-btn {
   margin-top: 8px;
   padding: 6px 20px;
   background: transparent;
@@ -241,7 +241,7 @@ h1 {
   transition: border-color 0.2s, color 0.2s;
 }
 
-#pause-btn:hover, #random-btn:hover, #archive-btn:hover, #share-btn:hover {
+#pause-btn:hover, #random-btn:hover, #archive-btn:hover, #share-btn:hover, #daily-btn:hover {
   border-color: #333;
   color: #333;
 }

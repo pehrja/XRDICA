@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
-// XRDICA v0.0.27
+// XRDICA v0.0.29
 
 // ── Game state ──
 let WORD_LIST     = [];
@@ -269,9 +269,16 @@ loadWithFallback().then(({ meta, words, cipherAlphabet, validChars }) => {
   const randomBtn = document.getElementById('random-btn');
   const isRandom = IS_RANDOM;
   if (randomBtn) {
-    randomBtn.textContent = isRandom ? 'Daily' : 'Random';
+    randomBtn.textContent = isRandom ? "Today's Puzzle" : 'Random';
     if (isRandom) randomBtn.onclick = () => window.location.href = 'index.html';
   }
+
+  // A specific non-daily, non-random file (an archived date, or any
+  // other standalone puzzle file) leaves no direct way back to today's
+  // daily other than the Archive modal or the title — show an explicit
+  // Daily button in the bar for that case.
+  const dailyBtn = document.getElementById('daily-btn');
+  if (dailyBtn) dailyBtn.style.display = (!IS_DAILY && !IS_RANDOM) ? 'inline-block' : 'none';
 
   // Show puzzle number/date in subtitle during random play
   if (IS_RANDOM && PUZZLE_SEED !== null) {
