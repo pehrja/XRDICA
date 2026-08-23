@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
-// XRDICA v0.0.29
+// XRDICA v0.0.33
 
 // ── Game state ──
 let WORD_LIST     = [];
@@ -764,8 +764,9 @@ document.addEventListener('keydown', e => {
 });
 
 // ── Set active tile ──
-// explicit=true means the player clicked — show same-cipher highlights
-// explicit=false means auto-advance — no highlights
+// explicit=true shows same-cipher highlights — used for every real
+// navigation (click, typing-advance, arrow keys). Only the very first
+// tile on page load skips this (nothing meaningful to highlight yet).
 function setActiveTile(r, c, explicit) {
   document.querySelectorAll('.tile.active').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tile.same-cipher').forEach(t => t.classList.remove('same-cipher'));
@@ -798,7 +799,7 @@ function advanceActive() {
     if (nextCol === activeCol) return;
     const nextTile = document.getElementById(`tile-${activeRow}-${nextCol}`);
     if (nextTile && !nextTile.dataset.locked) {
-      setActiveTile(activeRow, nextCol);
+      setActiveTile(activeRow, nextCol, true);
       return;
     }
   }
@@ -821,14 +822,14 @@ function moveActive(direction) {
   const rowLength = parseInt(rowEl.dataset.length);
 
   if (direction === 'left') {
-    setActiveTile(activeRow, (activeCol - 1 + rowLength) % rowLength);
+    setActiveTile(activeRow, (activeCol - 1 + rowLength) % rowLength, true);
   } else if (direction === 'right') {
-    setActiveTile(activeRow, (activeCol + 1) % rowLength);
+    setActiveTile(activeRow, (activeCol + 1) % rowLength, true);
   } else if (direction === 'up' || direction === 'down') {
     const targetRow   = nextUnsolvedRow(activeRow, direction);
     const targetRowEl = document.getElementById(`row-${targetRow}`);
     const targetLen   = parseInt(targetRowEl.dataset.length);
-    setActiveTile(targetRow, Math.min(activeCol, targetLen - 1));
+    setActiveTile(targetRow, Math.min(activeCol, targetLen - 1), true);
   }
 }
 
@@ -1131,6 +1132,29 @@ function fitGridToScreen() {
   document.documentElement.style.setProperty('--tile-size', `${tileSize}px`);
   document.documentElement.style.setProperty('--tile-font', `${Math.max(9, Math.floor(tileSize * 0.45))}px`);
   document.documentElement.style.setProperty('--cipher-font', `${Math.max(8, Math.floor(tileSize * 0.38))}px`);
+
+  // Match the header's width to the widest row's actual rendered width,
+  // so it visually centers over the grid's content instead of an
+  // unrelated fixed-width box. Bounded below by MIN_HEADER_WIDTH (so the
+  // header's own buttons always have room and don't wrap) and above by
+  // the actual viewport width (so an extremely long puzzle line can't
+  // push the header wider than the page itself).
+  const MIN_HEADER_WIDTH = 480; // px
+  if (header) {
+    const widestRowWidth = maxTilesInRow * tileSize + maxNonTileWidth;
+    const maxHeaderWidth = window.innerWidth - PADDING;
+    const boundedWidth = Math.min(Math.max(widestRowWidth, MIN_HEADER_WIDTH), maxHeaderWidth);
+    header.style.width = `${boundedWidth}px`;
+  }
+
+  // Cap the grid's own height to what's actually available and let it
+  // scroll internally past that point — MIN_TILE is a hard floor, so
+  // with enough rows (e.g. the full 10-row max) even minimum-size tiles
+  // can genuinely not fit on a shorter screen. Without this, the grid
+  // just grows past its space and pushes the keyboard off the bottom of
+  // the page with no way to scroll to it.
+  const grid = document.getElementById('grid');
+  if (grid) grid.style.maxHeight = `${Math.max(availableHeight, tileSize + ROW_GAP)}px`; // floor: always room for at least one row
 }
 
 // Re-fit on window resize

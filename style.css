@@ -1,5 +1,5 @@
 /* Copyright (c) 2025 Pehr Jansson. All rights reserved. */
-/* XRDICA v0.0.29 */
+/* XRDICA v0.0.33 */
 
 /* ── Reset & base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -14,7 +14,7 @@ body {
   height: 100vh;
   max-height: 100vh;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: auto; /* safety net: if header+grid+keyboard together exceed the viewport for any reason, the page scrolls rather than clipping the keyboard with no way to reach it */
   padding: 16px 24px;
 }
 
@@ -23,7 +23,7 @@ header {
   text-align: center;
   border-bottom: 2px solid #ddd;
   width: 100%;
-  max-width: 900px;
+  max-width: 2400px; /* generous absolute safety net — actual width is set dynamically in JS to match the grid's widest row, bounded by the viewport */
   padding-bottom: 12px;
   margin-bottom: 24px;
   position: relative;
@@ -94,7 +94,7 @@ h1 {
   margin-bottom: 8px;
   padding: 4px 0 4px 0;
   overflow-x: scroll;
-  overflow-y: hidden;
+  overflow-y: auto; /* scrolls internally if max-height (set dynamically in JS) is exceeded — keeps the keyboard always visible below it */
   -webkit-overflow-scrolling: touch;
 }
 
