@@ -8,18 +8,18 @@
 
 Gunsmith
 Bootlegger
+Buttermilk
 Adman
 Piggybank
 Fishmonger
+Bloodhound
 Hairdresser
+Paperclip
 Moneylender
 Roadrunner
 Longshoreman
-Paperclip
 Songbird
 Pipeline
-coleslaw
-bloodhound
 Taxicab
 
 
