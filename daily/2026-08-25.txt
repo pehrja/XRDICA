@@ -1,0 +1,54 @@
+#mode: static
+#title-reveal: Compound Nouns
+#author: Xrdica
+#alphabet: abcdefghijklmnopqrstuvwxyz
+#start-lines: 4
+#max-lines: 15
+#penalty: 2
+
+Gunsmith
+Bootlegger
+Adman
+Piggybank
+Fishmonger
+Hairdresser
+Moneylender
+Roadrunner
+Longshoreman
+Paperclip
+Songbird
+Pipeline
+Oceanliner
+Yachtclub
+Taxicab
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Indigo
+Tangerine
+Orange
+Sunglow
+Copper
+Canary
+Yellow
+Aquamarine
+Periwinkle
+Manatee
+Silver
+Brown
+Sepia
+
