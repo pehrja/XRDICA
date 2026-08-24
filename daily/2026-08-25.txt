@@ -18,8 +18,8 @@ Longshoreman
 Paperclip
 Songbird
 Pipeline
-Oceanliner
-Yachtclub
+coleslaw
+bloodhound
 Taxicab
 
 
