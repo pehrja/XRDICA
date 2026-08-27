@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
-// XRDICA v0.0.33
+// XRDICA v0.0.35
 
 // ── Game state ──
 let WORD_LIST     = [];

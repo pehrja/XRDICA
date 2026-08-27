@@ -1,5 +1,5 @@
 /* Copyright (c) 2025 Pehr Jansson. All rights reserved. */
-/* XRDICA v0.0.33 */
+/* XRDICA v0.0.35 */
 
 /* ── Reset & base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -562,6 +562,24 @@ h1 {
   font-size: 0.65rem;
   color: #ccc;
   pointer-events: none;
+}
+
+/* ── Facebook link ── */
+#facebook-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 16px auto 0 auto;
+  width: fit-content;
+  font-size: 0.8rem;
+  color: #888;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+#facebook-link:hover {
+  color: #333;
+  text-decoration: underline;
 }
 
 /* ── Random modal ── */
