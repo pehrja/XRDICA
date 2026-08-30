@@ -1,0 +1,20 @@
+#mode: static
+#title-reveal: Dolly Parton Songs
+#author: Xrdica
+#alphabet: \ 'abcdefghijklmnopqrstuvwxyz
+#start-lines: 4
+#max-lines: 11
+#penalty: 2
+
+Jolene
+I will always love you
+Here You Come Again
+Nine to Five
+Heartbreaker
+You're the Only One
+Two Doors Down
+Tennessee Homesick Blues
+Yellow Roses
+Rockin Years
+Islands in the Stream
+
