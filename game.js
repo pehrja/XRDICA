@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
-// XRDICA v0.0.35
+// XRDICA v0.0.37
 
 // ── Game state ──
 let WORD_LIST     = [];
@@ -78,9 +78,15 @@ function formatPuzzleDate(str) {
 // A date-based seed (from the daily rotation or an archive-calendar link
 // to a date with no curated file) is always > MAX_PUBLIC_SEED — see the
 // "date as seed" comment in loadWithFallback(). Those should show the
-// actual date, not a puzzle number; only a genuinely player-chosen
-// random seed (Random button / Enter Puzzle Number) shows "Puzzle #N".
+// actual date, not a puzzle number. An Easy Random seed lives in its own
+// offset range (see EASY_SEED_OFFSET below) and shows "EASY RANDOM —
+// Puzzle #N" using the un-offset display number. Only a genuinely
+// player-chosen random seed (Random button / Enter Puzzle Number) shows
+// plain "Puzzle #N".
 function seedSubtitle(seed) {
+  if (seed > EASY_SEED_OFFSET && seed <= EASY_SEED_OFFSET + MAX_PUBLIC_SEED) {
+    return `EASY RANDOM — Puzzle #${seed - EASY_SEED_OFFSET}`;
+  }
   if (seed > MAX_PUBLIC_SEED) {
     const s = String(seed); // YYYYMMDD
     return formatPuzzleDate(`${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`);
@@ -91,6 +97,16 @@ function seedSubtitle(seed) {
 // ── Bootstrap ──
 const urlParams    = new URLSearchParams(window.location.search);
 const MAX_PUBLIC_SEED = 99999;
+// Easy Random puzzles reuse the exact same wordlist.txt + seed machinery
+// as normal random puzzles, but their seed is offset into its own range
+// so it can never collide with a normal random seed (1-99999) OR a
+// date-based seed (8-digit, 20000000+) — the seed's numeric range alone
+// is what tells the game "this is an easy puzzle" once the URL is
+// loaded, no separate flag parameter needed. The player only ever sees/
+// types the small, friendly 1-99999 display number; this offset is
+// added/removed behind the scenes.
+const EASY_SEED_OFFSET = 100000;
+const EASY_MIN_PRESOLVED_TILES = 10; // pre-solve letters until at least this many tiles are locked
 
 // ── Today's date, using the player's local time zone ──
 // (Deliberately local, not UTC — a puzzle shouldn't roll over to "tomorrow"
@@ -159,6 +175,13 @@ if (seedParam) {
 // Initialise seeded RNG — every puzzle now has a seed, so this always runs
 setRng(PUZZLE_SEED);
 
+// Easy Random detection — see EASY_SEED_OFFSET comment above. Requires
+// IS_RANDOM too, purely as a defensive guard: an easy-range seed could
+// otherwise only ever occur on a wordlist.txt URL in practice, but this
+// keeps a hash-based seed for some other file from ever being
+// misinterpreted as easy mode by coincidence.
+const IS_EASY_RANDOM = IS_RANDOM && PUZZLE_SEED > EASY_SEED_OFFSET && PUZZLE_SEED <= EASY_SEED_OFFSET + MAX_PUBLIC_SEED;
+
 // ── Saved-progress key ──
 // Unique per puzzle (file + seed when applicable) so reloading the exact
 // same puzzle restores it, but a different date/seed/file never collides
@@ -184,6 +207,42 @@ async function loadWithFallback() {
   } else {
     return await loadWordList(wordListFile);
   }
+}
+
+// ── Easy Random: pre-solve a handful of letters as a head start ──
+// Deterministic — draws from the same seeded RNG already used for word
+// selection, so two players on the same easy seed see identical
+// pre-solved tiles. Doesn't touch score at all; it's exactly as if the
+// game simply started this way. Deliberately uniform random over the
+// letters actually present (not weighted toward common ones) — rare
+// letters are just as likely to get picked, per Pehr's design.
+function preSolveEasyTiles() {
+  const tiles = Array.from(document.querySelectorAll('.tile'));
+  const lettersPresent = shuffle(Array.from(new Set(tiles.map(t => t.dataset.letter))));
+
+  let solvedCount = 0;
+  for (const letter of lettersPresent) {
+    if (solvedCount >= EASY_MIN_PRESOLVED_TILES) break;
+    const matchingTiles = tiles.filter(t => t.dataset.letter === letter && !t.dataset.locked);
+    if (matchingTiles.length === 0) continue;
+    matchingTiles.forEach(t => {
+      t.dataset.locked = true;
+      t.dataset.guess  = letter;
+      t.classList.add('correct');
+      renderTile(t);
+    });
+    solvedCount += matchingTiles.length;
+  }
+
+  // A row could end up fully solved purely from this step — addRow()'s
+  // own checkRowIndirectlySolved() call already ran before pre-solving
+  // happened, so it couldn't have caught that; re-check every row now.
+  document.querySelectorAll('.row').forEach(rowEl => {
+    checkRowIndirectlySolved(parseInt(rowEl.id.replace('row-', '')));
+  });
+
+  updateKeyboard();
+  updateEnterKey();
 }
 
 loadWithFallback().then(({ meta, words, cipherAlphabet, validChars }) => {
@@ -256,6 +315,7 @@ loadWithFallback().then(({ meta, words, cipherAlphabet, validChars }) => {
     for (let r = 0; r < startCount; r++) addRow(r, words[r]);
   } else {
     for (let r = 0; r < INITIAL_ROWS; r++) addRow(r);
+    if (IS_EASY_RANDOM) preSolveEasyTiles();
   }
 
   // Restore any saved progress for this exact puzzle (prevents reloading
@@ -1194,7 +1254,28 @@ function startRandomGame() {
   window.location.href = `index.html?list=wordlist.txt&seed=${seed}`;
 }
 
+// ── Easy Random: fresh random seed, offset into the easy range ──
+function startEasyRandomGame() {
+  const displaySeed = Math.floor(Math.random() * MAX_PUBLIC_SEED) + 1;
+  window.location.href = `index.html?list=wordlist.txt&seed=${displaySeed + EASY_SEED_OFFSET}`;
+}
+
+let pendingEasySeed = false; // set before opening the puzzle-number modal so confirmPuzzleNumber() knows whether to add the easy offset
+
 function showPuzzleNumberInput() {
+  pendingEasySeed = false;
+  document.getElementById('puzzle-modal-title').textContent = 'Enter Puzzle Number';
+  document.getElementById('puzzle-modal-desc').textContent = 'Type a number between 1 and 99999 to play a specific puzzle.';
+  closeRandomModal();
+  promptPuzzleNumber();
+}
+
+// ── Easy Random: same input flow, but the entered number is offset
+// into the easy range before navigating ──
+function showEasyPuzzleNumberInput() {
+  pendingEasySeed = true;
+  document.getElementById('puzzle-modal-title').textContent = 'Enter Easy Puzzle Number';
+  document.getElementById('puzzle-modal-desc').textContent = 'Type a number between 1 and 99999 to play a specific easy puzzle.';
   closeRandomModal();
   promptPuzzleNumber();
 }
@@ -1216,12 +1297,13 @@ function closePuzzleModal() {
 
 function confirmPuzzleNumber() {
   const input = document.getElementById('puzzle-input');
-  const seed  = parseInt(input.value);
-  if (!seed || seed < 1 || seed > MAX_PUBLIC_SEED) {
+  const displaySeed = parseInt(input.value);
+  if (!displaySeed || displaySeed < 1 || displaySeed > MAX_PUBLIC_SEED) {
     input.classList.add('error');
     setTimeout(() => input.classList.remove('error'), 800);
     return;
   }
+  const seed = pendingEasySeed ? displaySeed + EASY_SEED_OFFSET : displaySeed;
   window.location.href = `index.html?list=wordlist.txt&seed=${seed}`;
 }
 
