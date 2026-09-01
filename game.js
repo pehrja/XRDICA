@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
-// XRDICA v0.0.37
+// XRDICA v0.0.39
 
 // ── Game state ──
 let WORD_LIST     = [];
@@ -106,7 +106,7 @@ const MAX_PUBLIC_SEED = 99999;
 // types the small, friendly 1-99999 display number; this offset is
 // added/removed behind the scenes.
 const EASY_SEED_OFFSET = 100000;
-const EASY_MIN_PRESOLVED_TILES = 10; // pre-solve letters until at least this many tiles are locked
+const EASY_PRESOLVE_PERCENT = 0.20; // target fraction of the initial rows' tiles to pre-solve — see preSolveEasyTiles() for why this is a cap the algorithm actively avoids exceeding, not just a stopping point
 
 // ── Today's date, using the player's local time zone ──
 // (Deliberately local, not UTC — a puzzle shouldn't roll over to "tomorrow"
@@ -216,15 +216,31 @@ async function loadWithFallback() {
 // game simply started this way. Deliberately uniform random over the
 // letters actually present (not weighted toward common ones) — rare
 // letters are just as likely to get picked, per Pehr's design.
+//
+// The target is a PERCENTAGE of the puzzle, not a flat count — a flat
+// number can be a huge fraction of a short puzzle and a tiny fraction
+// of a long one. The loop also actively avoids ever exceeding that
+// target: each letter's whole tile group is only taken if it fits
+// within what's left of the budget; a letter that would overshoot is
+// skipped in favor of trying a smaller one later in the shuffle order,
+// rather than being taken anyway once the loop happens to cross the
+// line. This can land a little under target when nothing left fits —
+// that's intentional; staying under the cap matters more than hitting
+// it exactly.
 function preSolveEasyTiles() {
   const tiles = Array.from(document.querySelectorAll('.tile'));
+  const target = Math.floor(tiles.length * EASY_PRESOLVE_PERCENT);
+  if (target <= 0) return;
+
   const lettersPresent = shuffle(Array.from(new Set(tiles.map(t => t.dataset.letter))));
 
   let solvedCount = 0;
   for (const letter of lettersPresent) {
-    if (solvedCount >= EASY_MIN_PRESOLVED_TILES) break;
+    const remainingBudget = target - solvedCount;
+    if (remainingBudget <= 0) break;
     const matchingTiles = tiles.filter(t => t.dataset.letter === letter && !t.dataset.locked);
     if (matchingTiles.length === 0) continue;
+    if (matchingTiles.length > remainingBudget) continue; // would overshoot the target — skip, try another letter
     matchingTiles.forEach(t => {
       t.dataset.locked = true;
       t.dataset.guess  = letter;
@@ -1249,6 +1265,17 @@ function closeRandomModal() {
   if (paused) togglePause();
 }
 
+function toggleEasyModal() {
+  const overlay = document.getElementById('easy-overlay');
+  overlay.style.display = 'flex';
+  if (!paused) togglePause();
+}
+
+function closeEasyModal() {
+  document.getElementById('easy-overlay').style.display = 'none';
+  if (paused) togglePause();
+}
+
 function startRandomGame() {
   const seed = Math.floor(Math.random() * MAX_PUBLIC_SEED) + 1;
   window.location.href = `index.html?list=wordlist.txt&seed=${seed}`;
@@ -1276,7 +1303,7 @@ function showEasyPuzzleNumberInput() {
   pendingEasySeed = true;
   document.getElementById('puzzle-modal-title').textContent = 'Enter Easy Puzzle Number';
   document.getElementById('puzzle-modal-desc').textContent = 'Type a number between 1 and 99999 to play a specific easy puzzle.';
-  closeRandomModal();
+  closeEasyModal();
   promptPuzzleNumber();
 }
 
@@ -1325,7 +1352,7 @@ function togglePause() {
 let autoPausedByBlur = false; // true only if THIS code paused the game (not a modal)
 
 function isAnyModalOpen() {
-  return ['archive-overlay', 'random-overlay', 'puzzle-overlay', 'about-overlay']
+  return ['archive-overlay', 'random-overlay', 'easy-overlay', 'puzzle-overlay', 'about-overlay']
     .some(id => document.getElementById(id)?.style.display === 'flex');
 }
 

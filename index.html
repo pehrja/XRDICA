@@ -1,4 +1,4 @@
-<!-- XRDICA v0.0.37 build 2026-08-31 -->
+<!-- XRDICA v0.0.39 build 2026-08-31 -->
 <!-- Copyright (c) 2025 Pehr Jansson. All rights reserved. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -10,7 +10,7 @@
   <meta http-equiv="Expires" content="0" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Xrdica</title>
-  <link rel="stylesheet" href="style.css?v=18" />
+  <link rel="stylesheet" href="style.css?v=19" />
   <!-- Cloudflare Web Analytics -->
   <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3ba99234369e465fbf5f226c7c7897c4"}'></script>
   <!-- End Cloudflare Web Analytics -->
@@ -25,6 +25,7 @@
     <button id="share-btn" onclick="shareResult()" style="display:none">Share Result</button>
     <button id="pause-btn" onclick="togglePause()">Pause</button>
     <button id="random-btn" onclick="toggleRandomModal()">Random</button>
+    <button id="easy-btn" onclick="toggleEasyModal()">Easy Mode</button>
     <button id="archive-btn" onclick="toggleArchive()">Archive</button>
     <button id="daily-btn" onclick="window.location.href='index.html'" style="display:none">Today's Puzzle</button>
     <button id="about-btn" onclick="toggleAbout()">?</button>
@@ -57,9 +58,17 @@
       <button class="random-option-btn" onclick="window.location.href='index.html'">Today's Puzzle</button>
       <button class="random-option-btn" onclick="startRandomGame()">New Random Game</button>
       <button class="random-option-btn" onclick="showPuzzleNumberInput()">Enter Puzzle Number</button>
+      <button id="random-cancel-btn" onclick="closeRandomModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Easy mode modal -->
+  <div id="easy-overlay" onclick="closeEasyModal()" style="display:none">
+    <div id="easy-modal" onclick="event.stopPropagation()">
+      <h2>Easy Mode</h2>
       <button class="random-option-btn" onclick="startEasyRandomGame()">Random Easy Puzzle</button>
       <button class="random-option-btn" onclick="showEasyPuzzleNumberInput()">Numbered Easy Puzzle</button>
-      <button id="random-cancel-btn" onclick="closeRandomModal()">Cancel</button>
+      <button id="easy-cancel-btn" onclick="closeEasyModal()">Cancel</button>
     </div>
   </div>
 
@@ -124,8 +133,8 @@
 
   <script src="loader.js?v=12"></script>
   <script src="words.js?v=9"></script>
-  <script src="game.js?v=37"></script>
+  <script src="game.js?v=39"></script>
 
-  <footer id="version">XRDICA v0.0.37</footer>
+  <footer id="version">XRDICA v0.0.39</footer>
 </body>
 </html>

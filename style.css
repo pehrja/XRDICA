@@ -1,5 +1,5 @@
 /* Copyright (c) 2025 Pehr Jansson. All rights reserved. */
-/* XRDICA v0.0.37 */
+/* XRDICA v0.0.39 */
 
 /* ── Reset & base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -227,7 +227,7 @@ h1 {
 }
 
 /* ── Header buttons ── */
-#pause-btn, #random-btn, #archive-btn, #share-btn, #daily-btn {
+#pause-btn, #random-btn, #easy-btn, #archive-btn, #share-btn, #daily-btn {
   margin-top: 8px;
   padding: 6px 20px;
   background: transparent;
@@ -241,7 +241,7 @@ h1 {
   transition: border-color 0.2s, color 0.2s;
 }
 
-#pause-btn:hover, #random-btn:hover, #archive-btn:hover, #share-btn:hover, #daily-btn:hover {
+#pause-btn:hover, #random-btn:hover, #easy-btn:hover, #archive-btn:hover, #share-btn:hover, #daily-btn:hover {
   border-color: #333;
   color: #333;
 }
@@ -583,7 +583,7 @@ h1 {
 }
 
 /* ── Random modal ── */
-#random-overlay {
+#random-overlay, #easy-overlay {
   display: none;
   position: fixed;
   inset: 0;
@@ -593,7 +593,7 @@ h1 {
   justify-content: center;
 }
 
-#random-modal {
+#random-modal, #easy-modal {
   background: #fff;
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -606,7 +606,7 @@ h1 {
   gap: 10px;
 }
 
-#random-modal h2 {
+#random-modal h2, #easy-modal h2 {
   font-size: 1.1rem;
   color: #111;
   margin-bottom: 4px;
@@ -628,7 +628,7 @@ h1 {
   background: #e8e8e8;
 }
 
-#random-cancel-btn {
+#random-cancel-btn, #easy-cancel-btn {
   padding: 8px;
   border: none;
   background: transparent;
