@@ -1772,7 +1772,6 @@ anagram
 anagrammatic
 anagrammatically
 anagrams
-anal
 analgesia
 analgesic
 analgesics
@@ -2142,7 +2141,6 @@ antral
 antrum
 ants
 antwerp
-anus
 anvil
 anvils
 anxieties
@@ -2831,7 +2829,6 @@ aspirin
 aspiring
 aspirins
 asps
-ass
 assail
 assailable
 assailant
@@ -2879,7 +2876,6 @@ assertive
 assertively
 assertiveness
 asserts
-asses
 assess
 assessable
 assessed
@@ -4006,7 +4002,6 @@ basses
 bassist
 bassoon
 bassoons
-bastard
 bastardisation
 bastardise
 bastardised
@@ -4774,7 +4769,6 @@ billposters
 bills
 billy
 biltong
-bimbo
 bimodal
 bimonthly
 bin
@@ -4900,8 +4894,6 @@ bissau
 bistable
 bistro
 bit
-bitch
-bitches
 bitchiness
 bitching
 bitchy
@@ -5502,7 +5494,6 @@ bony
 boo
 boobies
 booboo
-booby
 boobytrap
 boobytrapped
 boobytraps
@@ -5946,14 +5937,12 @@ breakups
 breakwater
 breakwaters
 bream
-breast
 breastbone
 breasted
 breastfeed
 breastfeeding
 breasting
 breastplate
-breasts
 breaststroke
 breath
 breathable
@@ -6615,7 +6604,6 @@ butchery
 butler
 butlers
 buts
-butt
 butted
 butter
 buttercup
@@ -6631,7 +6619,6 @@ butterscotch
 buttery
 butting
 buttock
-buttocks
 button
 buttoned
 buttonhole
@@ -6643,7 +6630,6 @@ buttress
 buttressed
 buttresses
 buttressing
-butts
 buxom
 buy
 buyer
@@ -9016,7 +9002,6 @@ cocain
 cocaine
 cochlea
 cochlear
-cock
 cockatoo
 cockatoos
 cockatrice
@@ -9038,7 +9023,6 @@ cockpit
 cockpits
 cockroach
 cockroaches
-cocks
 cockshies
 cocksure
 cocktail
@@ -11358,7 +11342,6 @@ crankshaft
 cranky
 crannies
 cranny
-crap
 crash
 crashed
 crasher
@@ -12257,7 +12240,6 @@ dame
 dames
 dammed
 damming
-damn
 damnable
 damnably
 damnation
@@ -14071,7 +14053,6 @@ dilating
 dilation
 dilator
 dilatory
-dildo
 dilemma
 dilemmas
 dilettante
@@ -15931,8 +15912,6 @@ dyes
 dyestuff
 dyestuffs
 dying
-dyke
-dykes
 dynamic
 dynamical
 dynamically
@@ -18634,11 +18613,7 @@ fading
 fads
 faecal
 faeces
-fag
-faggot
 faggots
-fagot
-fags
 fail
 failed
 failing
@@ -19040,7 +19015,6 @@ felicity
 feline
 felines
 fell
-fellatio
 felled
 feller
 felling
@@ -20089,10 +20063,7 @@ fond
 fondant
 fonder
 fondest
-fondle
-fondled
 fondles
-fondling
 fondly
 fondness
 fondue
@@ -24196,10 +24167,8 @@ hocks
 hocus
 hocuspocus
 hod
-hoe
 hoed
 hoeing
-hoes
 hog
 hogg
 hogged
@@ -24438,7 +24407,6 @@ hornets
 hornpipe
 hornpipes
 horns
-horny
 horoscope
 horoscopes
 horrendous
@@ -29321,7 +29289,6 @@ libertine
 libertines
 liberty
 libidinous
-libido
 librarian
 librarians
 librarianship
@@ -33735,7 +33702,6 @@ niftily
 nifty
 niger
 nigeria
-niggardly
 niggle
 niggled
 niggles
@@ -33790,8 +33756,6 @@ nip
 nipped
 nipper
 nipping
-nipple
-nipples
 nippon
 nips
 nirvana
@@ -34056,7 +34020,6 @@ nuclear
 nuclei
 nucleic
 nucleus
-nude
 nudeness
 nudes
 nudge
@@ -34067,7 +34030,6 @@ nudism
 nudist
 nudists
 nudities
-nudity
 nugget
 nuggets
 nuisance
@@ -34875,7 +34837,6 @@ organists
 organs
 organza
 orgies
-orgy
 orient
 orientable
 oriental
@@ -36425,7 +36386,6 @@ pecan
 peccary
 peck
 pecked
-pecker
 peckers
 pecking
 peckish
@@ -38221,12 +38181,9 @@ pork
 porkchop
 porker
 porky
-porn
-porno
 pornographer
 pornographers
 pornographic
-pornography
 porns
 porosity
 porous
@@ -38959,7 +38916,6 @@ pricewar
 pricey
 pricier
 pricing
-prick
 pricked
 pricking
 prickle
@@ -38970,7 +38926,6 @@ prickliest
 prickliness
 prickling
 prickly
-pricks
 pricy
 pride
 prided
@@ -39778,7 +39733,6 @@ ptolemy
 pub
 puberty
 pubescent
-pubic
 public
 publican
 publicans
@@ -40059,7 +40013,6 @@ pushovers
 pushups
 pushy
 puss
-pussy
 pussycat
 pussyfooting
 pustular
@@ -40259,7 +40212,6 @@ quebec
 queen
 queenly
 queens
-queer
 queerest
 queerly
 quell
@@ -40693,8 +40645,6 @@ rants
 rap
 rapacious
 rapacity
-rape
-raped
 rapes
 rapeseed
 rapid
@@ -40704,9 +40654,6 @@ rapids
 rapier
 rapiers
 rapine
-raping
-rapist
-rapists
 rapped
 rapping
 rapport
@@ -42936,10 +42883,8 @@ retaliates
 retaliating
 retaliation
 retaliatory
-retard
 retardant
 retardation
-retarded
 retarding
 retards
 retch
@@ -44895,7 +44840,6 @@ scrolling
 scrolls
 scrooge
 scrooges
-scrotum
 scrub
 scrubbed
 scrubber
@@ -45325,7 +45269,6 @@ semaphores
 semaphoring
 semblance
 semblances
-semen
 semester
 semesters
 semi
@@ -45612,9 +45555,6 @@ sewing
 sewings
 sewn
 sews
-sex
-sexed
-sexes
 sexier
 sexiest
 sexily
@@ -45638,7 +45578,6 @@ sexual
 sexualities
 sexuality
 sexually
-sexy
 shabbier
 shabbiest
 shabbily
@@ -45669,8 +45608,6 @@ shaft
 shafted
 shafting
 shafts
-shag
-shagged
 shaggiest
 shaggy
 shags
@@ -47038,8 +46975,6 @@ slushes
 slushier
 slushiest
 slushy
-slut
-sluts
 sly
 slyer
 slyly
@@ -47176,7 +47111,6 @@ smuggles
 smuggling
 smugly
 smugness
-smut
 smuts
 smutty
 snack
@@ -51483,9 +51417,6 @@ testdriving
 tested
 tester
 testers
-testes
-testicle
-testicles
 testicular
 testier
 testiest
@@ -52143,7 +52074,6 @@ titrated
 titration
 titre
 titres
-tits
 titter
 tittered
 tittering
@@ -52624,7 +52554,6 @@ tramcar
 tramcars
 tramlines
 trammel
-tramp
 tramped
 tramping
 trample
@@ -55946,7 +55875,6 @@ vibrational
 vibrationally
 vibrations
 vibrato
-vibrator
 vibrators
 vibratory
 vicar
@@ -56098,7 +56026,6 @@ vipers
 virago
 viral
 virgil
-virgin
 virginal
 virginia
 virginity
@@ -57214,9 +57141,7 @@ whooping
 whoops
 whoosh
 whop
-whore
 whorehouse
-whores
 whoring
 whorled
 whorls
