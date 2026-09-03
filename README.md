@@ -22,6 +22,10 @@ Each tile shows a cipher instead of a letter. Click a tile and type your guess �
 - **Spacebar** clears the current tile — unless the puzzle hides spaces too (you'll see a note above the grid), in which case spacebar guesses a space instead
 - Selecting a tile highlights every other tile with the same cipher, in orange
 
+![A partially solved XRDICA grid](screenshot-grid.png)
+
+*A grid mid-solve: ciphers 19 and 9 have already been cracked as E and R — every tile sharing those numbers filled in automatically, everywhere in the grid, the moment they were solved. The tile showing cipher 12 is currently selected (black border); since another tile elsewhere in the grid shares that same cipher, it lights up in orange too, showing exactly where that letter will land once you figure it out. Solved letters also light up on the on-screen keyboard.*
+
 Press **Enter** to check everything at once:
 - **Green** = correct, locked in for good
 - **Red** = wrong — clears on your next move
