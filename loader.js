@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
-// XRDICA v0.0.39
+// XRDICA v0.0.40
 
 // ── Word list loader ──
 // Fetches a .txt word list file and parses metadata headers.

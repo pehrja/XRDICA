@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
-// XRDICA v0.0.39
+// XRDICA v0.0.40
 
 // ── Game state ──
 let WORD_LIST     = [];
@@ -107,6 +107,37 @@ const MAX_PUBLIC_SEED = 99999;
 // added/removed behind the scenes.
 const EASY_SEED_OFFSET = 100000;
 const EASY_PRESOLVE_PERCENT = 0.20; // target fraction of the initial rows' tiles to pre-solve — see preSolveEasyTiles() for why this is a cap the algorithm actively avoids exceeding, not just a stopping point
+
+// ── Optional-modes visibility flag ──
+// Controls whether extra header buttons (Random, Easy Mode, and any
+// future ones added the same way) are shown at all. Off by default —
+// the public-facing site is strictly a daily puzzle + Archive. ?modes=1
+// reveals them and stickily remembers that choice via localStorage for
+// future visits; ?modes=0 explicitly re-locks (handy for testing without
+// digging into DevTools). Buttons only — the underlying URLs these
+// buttons link to (e.g. ?list=wordlist.txt&seed=N) are untouched either
+// way, so an existing bookmark or shared link still works regardless.
+const MODES_UNLOCK_KEY = 'xrdica-modes-unlocked';
+const modesParam = urlParams.get('modes');
+if (modesParam === '1') {
+  try { localStorage.setItem(MODES_UNLOCK_KEY, '1'); } catch (e) {}
+} else if (modesParam === '0') {
+  try { localStorage.removeItem(MODES_UNLOCK_KEY); } catch (e) {}
+}
+let MODES_UNLOCKED = modesParam === '1';
+if (!MODES_UNLOCKED && modesParam !== '0') {
+  try { MODES_UNLOCKED = localStorage.getItem(MODES_UNLOCK_KEY) === '1'; } catch (e) {}
+}
+
+// Applied immediately (not inside the async puzzle-load callback below)
+// so there's no flash of these buttons being visible before they hide.
+function applyModesVisibility() {
+  ['random-btn', 'easy-btn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = MODES_UNLOCKED ? '' : 'none';
+  });
+}
+applyModesVisibility();
 
 // ── Today's date, using the player's local time zone ──
 // (Deliberately local, not UTC — a puzzle shouldn't roll over to "tomorrow"
@@ -341,12 +372,22 @@ loadWithFallback().then(({ meta, words, cipherAlphabet, validChars }) => {
 
   scoreTimer = setInterval(() => addScore(1, 'time'), 5000);
   fitGridToScreen();
-  // Update random button label based on current mode
+  // Update random button label based on current mode. If currently
+  // viewing a random/easy puzzle (e.g. via a direct link or bookmark,
+  // which still works even when modes are locked — see MODES_UNLOCKED
+  // above), always show it as a way back home regardless of the lock
+  // state; otherwise respect the lock.
   const randomBtn = document.getElementById('random-btn');
   const isRandom = IS_RANDOM;
   if (randomBtn) {
-    randomBtn.textContent = isRandom ? "Today's Puzzle" : 'Random';
-    if (isRandom) randomBtn.onclick = () => window.location.href = 'index.html';
+    if (isRandom) {
+      randomBtn.style.display = '';
+      randomBtn.textContent = "Today's Puzzle";
+      randomBtn.onclick = () => window.location.href = 'index.html';
+    } else {
+      randomBtn.style.display = MODES_UNLOCKED ? '' : 'none';
+      randomBtn.textContent = 'Random';
+    }
   }
 
   // A specific non-daily, non-random file (an archived date, or any
