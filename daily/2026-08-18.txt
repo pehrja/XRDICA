@@ -1,0 +1,16 @@
+#mode: static
+#start-lines: 4
+#max-lines: 10
+#interval: 50
+#penalty: 2
+
+frost
+flammable
+prancing
+equatorial
+haunts
+marquee
+safeties
+intestinal
+unsealing
+grudgingly
