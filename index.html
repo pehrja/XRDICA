@@ -1,4 +1,4 @@
-<!-- XRDICA v0.0.40 build 2026-08-31 -->
+<!-- XRDICA v0.0.49 build 2026-09-14 -->
 <!-- Copyright (c) 2025 Pehr Jansson. All rights reserved. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -20,6 +20,7 @@
   <header>
     <h1 id="game-title" onclick="window.location.href='index.html'" title="Back to today's puzzle">XRDICA</h1>
     <p id="game-subtitle" style="display:none"></p>
+    <p id="game-theme" style="display:none"></p>
     <div id="score">Score: <span id="score-value">0</span></div>
     <p id="max-rows-note" style="display:none">All rows revealed — no more will appear as your score increases.</p>
     <button id="share-btn" onclick="shareResult()" style="display:none">Share Result</button>
@@ -100,7 +101,7 @@
       <p>Click any tile to select it, then type a letter to enter your guess. Your guess appears above the cipher number. Use the <strong>arrow keys</strong> to move between tiles, and <strong>Backspace</strong> to clear and step back. You can move freely between rows — your guesses are preserved everywhere until you commit or clear them.</p>
 
       <h3>Submitting a Guess</h3>
-      <p>When every tile in a row has a letter entered, the <strong>GUESS</strong> button lights up. Press it (or hit Enter) to check your answer:</p>
+      <p>When you're ready, press <strong>Enter</strong> to check your answers — every tile with a letter entered gets checked at once:</p>
       <ul>
         <li><strong>Green tiles</strong> — correct! Those letters are locked in and will appear throughout the grid wherever that cipher appears.</li>
         <li><strong>Red tiles</strong> — incorrect. Your next action will clear them so you can try again.</li>
@@ -110,10 +111,30 @@
       <p>Because the same cipher always means the same letter, solving one word gives you clues about all the others. If you think a letter might be right for a particular cipher, type it in — if it only maps to one cipher in your current row, it will appear as a faint hint in the other rows too.</p>
 
       <h3>Scoring</h3>
-      <p>Lower is better. You score one point for each letter key or backspace pressed, and one point every five seconds. Correct guesses on a GUESS deduct one point each — so thinking before you type pays off.</p>
+      <p>Lower is better. You score one point for each letter key or backspace pressed, and one point every five seconds. Each correct letter deducts one point when you check — so thinking before you type pays off.</p>
 
       <h3>New Rows</h3>
-      <p>Every 60 points, a new word is added to the bottom of the grid, up to a maximum of 10 rows. The puzzle is complete when all rows are solved.</p>
+      <p>Every 50 points, a new word is added to the bottom of the grid, up to a maximum of 10 rows. The puzzle is complete when all rows are solved.</p>
+
+      <h3>Daily Puzzle</h3>
+      <p>A new puzzle every day at midnight, your local time — the same one for everyone. If nothing's been posted yet for the day, an auto-generated puzzle plays instead, so there's always something to solve.</p>
+
+      <div id="about-random-section">
+        <h3>Random Game</h3>
+        <p>Click <strong>Random</strong> for a menu: play today's puzzle, start a brand-new random game, or enter a specific puzzle number to challenge a friend to the exact same one.</p>
+      </div>
+
+      <div id="about-easy-section">
+        <h3>Easy Mode</h3>
+        <p>Click <strong>Easy Mode</strong> for a gentler way to learn the game: a small percentage of the starting grid's letters are already solved for you, chosen randomly — rare letters included, not just easy ones — so you always have a foothold. Those free letters never affect your score; it's exactly as if the puzzle started that way.</p>
+      </div>
+
+      <h3>Archive</h3>
+      <p>Browse past days on a calendar. The <strong>Today's Puzzle</strong> button (or clicking the <strong>XRDICA</strong> title) always brings you back to today's puzzle.</p>
+
+      <h3>Pause</h3>
+      <p>Click <strong>Pause</strong> to stop the clock. The game also auto-pauses if you switch tabs, windows, or apps, so you're never penalized for stepping away.</p>
+
       <p><em>Good luck!</em></p>
     </div>
   </div>
@@ -133,8 +154,8 @@
 
   <script src="loader.js?v=12"></script>
   <script src="words.js?v=9"></script>
-  <script src="game.js?v=40"></script>
+  <script src="game.js?v=41"></script>
 
-  <footer id="version">XRDICA v0.0.40</footer>
+  <footer id="version">XRDICA v0.0.49</footer>
 </body>
 </html>

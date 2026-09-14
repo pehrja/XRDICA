@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
-// XRDICA v0.0.40
+// XRDICA v0.0.49
 
 // ── Game state ──
 let WORD_LIST     = [];
@@ -97,7 +97,7 @@ function seedSubtitle(seed) {
 // ── Bootstrap ──
 const urlParams    = new URLSearchParams(window.location.search);
 const MAX_PUBLIC_SEED = 99999;
-// Easy Random puzzles reuse the exact same wordlist.txt + seed machinery
+// Easy Random puzzles reuse the exact same wordlists/wordlist.txt + seed machinery
 // as normal random puzzles, but their seed is offset into its own range
 // so it can never collide with a normal random seed (1-99999) OR a
 // date-based seed (8-digit, 20000000+) — the seed's numeric range alone
@@ -115,7 +115,7 @@ const EASY_PRESOLVE_PERCENT = 0.20; // target fraction of the initial rows' tile
 // reveals them and stickily remembers that choice via localStorage for
 // future visits; ?modes=0 explicitly re-locks (handy for testing without
 // digging into DevTools). Buttons only — the underlying URLs these
-// buttons link to (e.g. ?list=wordlist.txt&seed=N) are untouched either
+// buttons link to (e.g. ?list=wordlists/wordlist.txt&seed=N) are untouched either
 // way, so an existing bookmark or shared link still works regardless.
 const MODES_UNLOCK_KEY = 'xrdica-modes-unlocked';
 const modesParam = urlParams.get('modes');
@@ -132,7 +132,7 @@ if (!MODES_UNLOCKED && modesParam !== '0') {
 // Applied immediately (not inside the async puzzle-load callback below)
 // so there's no flash of these buttons being visible before they hide.
 function applyModesVisibility() {
-  ['random-btn', 'easy-btn'].forEach(id => {
+  ['random-btn', 'easy-btn', 'about-random-section', 'about-easy-section'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = MODES_UNLOCKED ? '' : 'none';
   });
@@ -160,7 +160,7 @@ const listParam    = urlParams.get('list');
 const DAILY_FILE   = `daily/${TODAY_DATE_DASHED}.txt`; // e.g. daily/2026-08-17.txt
 const wordListFile = listParam || DAILY_FILE;
 const IS_DAILY     = !listParam;
-const IS_RANDOM    = listParam === 'wordlist.txt';
+const IS_RANDOM    = listParam === 'wordlists/wordlist.txt';
 
 // ── Puzzle date for display ──
 // Never sourced from a #date meta line (deprecated/ignored) — the date
@@ -208,7 +208,7 @@ setRng(PUZZLE_SEED);
 
 // Easy Random detection — see EASY_SEED_OFFSET comment above. Requires
 // IS_RANDOM too, purely as a defensive guard: an easy-range seed could
-// otherwise only ever occur on a wordlist.txt URL in practice, but this
+// otherwise only ever occur on a wordlists/wordlist.txt URL in practice, but this
 // keeps a hash-based seed for some other file from ever being
 // misinterpreted as easy mode by coincidence.
 const IS_EASY_RANDOM = IS_RANDOM && PUZZLE_SEED > EASY_SEED_OFFSET && PUZZLE_SEED <= EASY_SEED_OFFSET + MAX_PUBLIC_SEED;
@@ -227,16 +227,52 @@ async function loadWithFallback() {
       const res = await fetch(DAILY_FILE);
       if (res.ok) {
         const text = await res.text();
-        return parseWordListText(text);
+        const result = await parseWordListText(text);
+        return await resolveWordlistReference(result);
       }
     } catch(e) {}
     // Fallback: no curated file for today — auto-generate a puzzle from
-    // wordlist.txt. Seed is already set (see "Determine seed" above,
+    // wordlists/wordlist.txt. Seed is already set (see "Determine seed" above,
     // branch 3) from today's date, so this is identical for every
     // player regardless of whether a curated file existed.
-    return await loadWordList('wordlist.txt');
+    return await loadWordList('wordlists/wordlist.txt');
   } else {
-    return await loadWordList(wordListFile);
+    const result = await loadWordList(wordListFile);
+    return await resolveWordlistReference(result);
+  }
+}
+
+// ── #wordlist support — a daily/curated file can defer its actual word
+// pool to a different file (e.g. "#wordlist: sportsStars.txt"), so a
+// themed daily can be a genuine random-mode puzzle (deterministic per
+// date, same as any other daily) without hand-curating specific words
+// each day. The referencing file's OWN meta (mode, theme, rows,
+// interval, penalty, etc.) still governs the puzzle; only the words/
+// cipher-alphabet/valid-chars come from the referenced file instead.
+// Falls back to the referencing file's own (likely empty) word list if
+// the referenced file can't be loaded, so a typo/missing file fails soft
+// rather than breaking the whole day's puzzle.
+async function resolveWordlistReference(result) {
+  if (!result.meta.wordlist) return result;
+  try {
+    // Pass the daily file's own #alphabet through — the referenced pool
+    // file itself typically won't have one, but still needs it applied
+    // (e.g. space-tokens for multi-word names) for filtering to work.
+    const pool = await loadWordList(result.meta.wordlist, result.meta.alphabet);
+    return {
+      meta: result.meta,
+      words: pool.words,
+      cipherAlphabet: pool.cipherAlphabet,
+      validChars: pool.validChars,
+      totalLines: pool.totalLines,
+      firstRejectedLine: pool.firstRejectedLine,
+      firstRejectedChar: pool.firstRejectedChar,
+    };
+  } catch (e) {
+    // The referenced file itself couldn't be fetched at all (404, typo'd
+    // path, etc.) — distinct from loading fine but having nothing usable,
+    // so the error message downstream can say which actually happened.
+    return { ...result, wordlistFetchFailed: true };
   }
 }
 
@@ -258,9 +294,54 @@ async function loadWithFallback() {
 // line. This can land a little under target when nothing left fits —
 // that's intentional; staying under the cap matters more than hitting
 // it exactly.
-function preSolveEasyTiles() {
+//
+// The percentage itself is configurable per-puzzle via resolveEasyPercent()
+// below — a #easy flag with an explicit number overrides the default.
+// Resolve which percentage to use for a given puzzle: an explicit
+// number on the #easy flag (e.g. "#easy: 10") overrides the default;
+// bare "#easy"/"#easy: true", or the seed-offset (menu-driven) route,
+// both use the standard default.
+function resolveEasyPercent(meta) {
+  if (meta && typeof meta.easy === 'number') return meta.easy / 100;
+  return EASY_PRESOLVE_PERCENT;
+}
+
+// Pre-solve exactly the given letters, wherever they appear — the
+// deterministic, author-controlled counterpart to the percentage-based
+// preSolveEasyTiles() below, e.g. "#easy: aeiou".
+function preSolveSpecificLetters(letters) {
+  const targetLetters = new Set(letters.toLowerCase().split(''));
   const tiles = Array.from(document.querySelectorAll('.tile'));
-  const target = Math.floor(tiles.length * EASY_PRESOLVE_PERCENT);
+  tiles.forEach(t => {
+    if (targetLetters.has(t.dataset.letter) && !t.dataset.locked) {
+      t.dataset.locked = true;
+      t.dataset.guess = t.dataset.letter;
+      t.classList.add('correct');
+      renderTile(t);
+    }
+  });
+  document.querySelectorAll('.row').forEach(rowEl => {
+    checkRowIndirectlySolved(parseInt(rowEl.id.replace('row-', '')));
+  });
+  updateKeyboard();
+  updateEnterKey();
+}
+
+// Single entry point for both flavors of #easy — a string means specific
+// letters, anything else (bare/true/a number) means the percentage-based
+// mechanic below.
+function applyEasyMode(meta) {
+  if (typeof meta.easy === 'string') {
+    preSolveSpecificLetters(meta.easy);
+  } else {
+    preSolveEasyTiles(resolveEasyPercent(meta));
+  }
+}
+
+function preSolveEasyTiles(percent) {
+  percent = (typeof percent === 'number') ? percent : EASY_PRESOLVE_PERCENT;
+  const tiles = Array.from(document.querySelectorAll('.tile'));
+  const target = Math.floor(tiles.length * percent);
   if (target <= 0) return;
 
   const lettersPresent = shuffle(Array.from(new Set(tiles.map(t => t.dataset.letter))));
@@ -292,7 +373,7 @@ function preSolveEasyTiles() {
   updateEnterKey();
 }
 
-loadWithFallback().then(({ meta, words, cipherAlphabet, validChars }) => {
+loadWithFallback().then(({ meta, words, cipherAlphabet, validChars, totalLines, firstRejectedLine, firstRejectedChar, wordlistFetchFailed }) => {
   WORD_LIST   = words;
   VALID_CHARS = validChars;
   GAME_MODE   = meta.mode;
@@ -303,8 +384,8 @@ loadWithFallback().then(({ meta, words, cipherAlphabet, validChars }) => {
   MAX_WORD_LENGTH = meta.maxLength || 10;
 
   if (meta.mode === 'random') {
-    INITIAL_ROWS  = meta.rows; // loader.js guarantees this is >= MIN_INITIAL_ROWS (4)
-    MAX_ROWS      = meta.maxRows;
+    INITIAL_ROWS  = meta.startLines; // loader.js guarantees this is >= MIN_INITIAL_ROWS (4)
+    MAX_ROWS      = meta.maxLines;
     NEW_ROW_EVERY = meta.interval;
     // Decide the entire word sequence up front — deterministic from the
     // seed alone, so every player on this puzzle sees the same rows in
@@ -323,8 +404,18 @@ loadWithFallback().then(({ meta, words, cipherAlphabet, validChars }) => {
   if (meta.mode === 'static') {
     document.getElementById('game-title').textContent = 'XRDICA';
     document.title = 'XRDICA';
-    if (PUZZLE_DATE_DASHED) {
-      PUZZLE_LABEL = formatPuzzleDate(PUZZLE_DATE_DASHED);
+    // A dated daily puzzle shows its date; an #easy-flagged puzzle also
+    // shows an Easy Mode indicator (so pre-solved tiles don't look like a
+    // bug) — either, both, or neither can apply, depending on the file.
+    const dateLabel = PUZZLE_DATE_DASHED ? formatPuzzleDate(PUZZLE_DATE_DASHED) : null;
+    if (dateLabel && meta.easy) {
+      PUZZLE_LABEL = `${dateLabel} · Easy Mode`;
+    } else if (dateLabel) {
+      PUZZLE_LABEL = dateLabel;
+    } else if (meta.easy) {
+      PUZZLE_LABEL = 'Easy Mode';
+    }
+    if (PUZZLE_LABEL) {
       document.getElementById('game-subtitle').textContent = PUZZLE_LABEL;
       document.getElementById('game-subtitle').style.display = 'block';
     }
@@ -336,6 +427,17 @@ loadWithFallback().then(({ meta, words, cipherAlphabet, validChars }) => {
     if (meta.subtitle) {
       document.getElementById('game-subtitle').textContent = meta.subtitle;
       document.getElementById('game-subtitle').style.display = 'block';
+    }
+  }
+
+  // A #theme-flagged puzzle (see #wordlist above) shows its theme as its
+  // own line, between the date and the score — independent of static vs
+  // random mode, and independent of the date/Easy Mode label above it.
+  if (meta.theme) {
+    const themeEl = document.getElementById('game-theme');
+    if (themeEl) {
+      themeEl.textContent = meta.theme;
+      themeEl.style.display = 'block';
     }
   }
 
@@ -352,17 +454,59 @@ loadWithFallback().then(({ meta, words, cipherAlphabet, validChars }) => {
 
   buildKeyboard(cipherAlphabet);
 
+  // Fail clearly rather than silently rendering nothing — covers both a
+  // genuinely empty word source (e.g. a broken #wordlist reference) and
+  // a non-empty one where nothing survives the length filter for random
+  // mode (e.g. a themed word list of names longer than the default
+  // #max-length, before an author widens it).
+  const noUsableWords = (meta.mode === 'static' && words.length === 0) ||
+                        (meta.mode !== 'static' && RANDOM_SEQUENCE.length === 0);
+  if (noUsableWords) {
+    const gridEl = document.getElementById('grid');
+    if (gridEl) {
+      gridEl.innerHTML = '';
+      const msg = document.createElement('p');
+      msg.style.cssText = 'padding: 24px; color: #c0392b; max-width: 600px; line-height: 1.5;';
+      const alphaShown = VALID_CHARS && VALID_CHARS.size ? Array.from(VALID_CHARS).join('') : 'abcdefghijklmnopqrstuvwxyz';
+      const source = meta.wordlist ? `"${meta.wordlist}" (referenced via #wordlist)` : 'this puzzle';
+      let detail;
+      if (meta.wordlist && wordlistFetchFailed) {
+        // The referenced file itself couldn't be fetched — a 404 or typo'd
+        // path, distinct from loading fine but having nothing usable.
+        detail = `Could not load ${source} — check that the file actually exists at that path.`;
+      } else if (words.length > 0 && meta.mode !== 'static') {
+        // Passed the alphabet check fine, but nothing survived the
+        // SEPARATE length filter used for random-mode word selection —
+        // a different failure than a character/alphabet problem, and
+        // the one long multi-word names (city/celebrity lists) actually
+        // tend to hit, since the default #max-length is 10.
+        const sample = words[0];
+        detail = `${totalLines} word${totalLines === 1 ? '' : 's'} were read from ${source} and passed the alphabet check, but none fall within the current #min-length (${MIN_WORD_LENGTH})/#max-length (${MAX_WORD_LENGTH}) range. Example: "${sample}" is ${sample.length} characters. Try widening #max-length in the daily file.`;
+      } else {
+        detail = `No usable words were found in ${source} — ${totalLines} line${totalLines === 1 ? '' : 's'} read, all rejected. Every line must only use characters in "${alphaShown}".`;
+        if (firstRejectedLine) {
+          detail += ` Example: the line "${firstRejectedLine}" contains "${firstRejectedChar}", which isn't in that alphabet.`;
+        }
+      }
+      msg.textContent = detail;
+      gridEl.appendChild(msg);
+    }
+    fitGridToScreen(); // still give the header a sane width, even with no rows
+    return;
+  }
+
   if (meta.mode === 'static') {
     STATIC_LINES = words;
-    STATIC_MAX   = meta.maxLines || 12;
+    STATIC_MAX   = meta.maxLines; // loader.js guarantees this is always set (default 10)
     // loader.js guarantees meta.startLines is always >= MIN_INITIAL_ROWS (4)
     STATIC_NEXT  = meta.startLines;
     // Add only the initial lines (clamped to however many words actually exist)
     const startCount = Math.min(meta.startLines, words.length);
     for (let r = 0; r < startCount; r++) addRow(r, words[r]);
+    if (meta.easy) applyEasyMode(meta);
   } else {
     for (let r = 0; r < INITIAL_ROWS; r++) addRow(r);
-    if (IS_EASY_RANDOM) preSolveEasyTiles();
+    if (IS_EASY_RANDOM || meta.easy) applyEasyMode(meta);
   }
 
   // Restore any saved progress for this exact puzzle (prevents reloading
@@ -404,11 +548,21 @@ loadWithFallback().then(({ meta, words, cipherAlphabet, validChars }) => {
     subtitleEl.textContent = PUZZLE_LABEL;
     subtitleEl.style.display = 'block';
   } else if (IS_DAILY && meta.mode !== 'static') {
-    // Auto-generated daily fallback — show date
+    // Auto-generated daily fallback, OR a themed random daily (#wordlist)
+    // — same date+Easy Mode composition as the static branch above.
     const subtitleEl = document.getElementById('game-subtitle');
-    PUZZLE_LABEL = formatPuzzleDate(PUZZLE_DATE_DASHED);
-    subtitleEl.textContent = PUZZLE_LABEL;
-    subtitleEl.style.display = 'block';
+    const dateLabel = PUZZLE_DATE_DASHED ? formatPuzzleDate(PUZZLE_DATE_DASHED) : null;
+    if (dateLabel && meta.easy) {
+      PUZZLE_LABEL = `${dateLabel} · Easy Mode`;
+    } else if (dateLabel) {
+      PUZZLE_LABEL = dateLabel;
+    } else if (meta.easy) {
+      PUZZLE_LABEL = 'Easy Mode';
+    }
+    if (PUZZLE_LABEL) {
+      subtitleEl.textContent = PUZZLE_LABEL;
+      subtitleEl.style.display = 'block';
+    }
   }
 
   setActiveTile(0, 0);
@@ -1191,6 +1345,7 @@ function fitGridToScreen() {
   const PUNCT_W   = 10;   // px — punctuation marker width (matches CSS)
   const BTN_W     = 100;  // px — GUESS button width + gap
   const PADDING   = 80;   // px — page left+right padding
+  const MIN_HEADER_WIDTH = 480; // px — floor so header buttons always have room
 
   const availableWidth = window.innerWidth - PADDING - BTN_W;
 
@@ -1220,7 +1375,15 @@ function fitGridToScreen() {
     }
   });
 
-  if (maxTilesInRow === 0) return;
+  if (maxTilesInRow === 0) {
+    // No rows to size against (e.g. a word list that produced zero
+    // usable puzzle rows — see the error handling in the load callback
+    // above) — still give the header a sane width rather than leaving
+    // it at the loose CSS default, which renders oddly.
+    const header = document.querySelector('header');
+    if (header) header.style.width = `${MIN_HEADER_WIDTH}px`;
+    return;
+  }
 
   // ── Width constraint ──
   // tileSize = (availableWidth - nonTileWidth) / tileCount
@@ -1256,7 +1419,6 @@ function fitGridToScreen() {
   // header's own buttons always have room and don't wrap) and above by
   // the actual viewport width (so an extremely long puzzle line can't
   // push the header wider than the page itself).
-  const MIN_HEADER_WIDTH = 480; // px
   if (header) {
     const widestRowWidth = maxTilesInRow * tileSize + maxNonTileWidth;
     const maxHeaderWidth = window.innerWidth - PADDING;
@@ -1319,13 +1481,13 @@ function closeEasyModal() {
 
 function startRandomGame() {
   const seed = Math.floor(Math.random() * MAX_PUBLIC_SEED) + 1;
-  window.location.href = `index.html?list=wordlist.txt&seed=${seed}`;
+  window.location.href = `index.html?list=wordlists/wordlist.txt&seed=${seed}`;
 }
 
 // ── Easy Random: fresh random seed, offset into the easy range ──
 function startEasyRandomGame() {
   const displaySeed = Math.floor(Math.random() * MAX_PUBLIC_SEED) + 1;
-  window.location.href = `index.html?list=wordlist.txt&seed=${displaySeed + EASY_SEED_OFFSET}`;
+  window.location.href = `index.html?list=wordlists/wordlist.txt&seed=${displaySeed + EASY_SEED_OFFSET}`;
 }
 
 let pendingEasySeed = false; // set before opening the puzzle-number modal so confirmPuzzleNumber() knows whether to add the easy offset
@@ -1372,7 +1534,7 @@ function confirmPuzzleNumber() {
     return;
   }
   const seed = pendingEasySeed ? displaySeed + EASY_SEED_OFFSET : displaySeed;
-  window.location.href = `index.html?list=wordlist.txt&seed=${seed}`;
+  window.location.href = `index.html?list=wordlists/wordlist.txt&seed=${seed}`;
 }
 
 // ── Pause / resume ──
@@ -1530,7 +1692,7 @@ async function renderArchiveCalendar() {
           window.location.href = `index.html?list=daily/${dateStr}.txt`;
         } else {
           const dateSeedInt = parseInt(dateStr.replace(/-/g, '')); // YYYYMMDD
-          window.location.href = `index.html?list=wordlist.txt&seed=${dateSeedInt}`;
+          window.location.href = `index.html?list=wordlists/wordlist.txt&seed=${dateSeedInt}`;
         }
       });
       checks.push(
