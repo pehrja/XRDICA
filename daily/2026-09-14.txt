@@ -1,0 +1,21 @@
+#mode: static
+#start-lines: 10
+#max-lines: 10
+#interval: 50
+#penalty: 2
+#theme: World Cities
+#alphabet: abcdefghijklmnopqrstuvwxyz
+#easy: nli
+
+Shanghai
+Toronto
+Caracas 
+Zurich
+Chicago
+Baghdad
+Marrakech
+Stockholm
+Warsaw
+Mumbai
+
+
