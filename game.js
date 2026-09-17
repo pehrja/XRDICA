@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
-// XRDICA v0.0.52
+// XRDICA v0.0.57
 
 // ── Game state ──
 let WORD_LIST     = [];
@@ -34,6 +34,7 @@ let scoreTimer   = null;
 let titleReveal  = null;
 let puzzleAuthor = null;
 let PUZZLE_LABEL = null; // date or "Puzzle #N" text — reused by the share button
+let IS_EASY_ACTIVE = false; // set true whenever applyEasyMode() actually runs — checkGameOver() uses this to skip star ratings/stats for assisted games
 
 // ── Parse and format a date string into international format ──
 // Accepts: mmddyyyy, mm/dd/yyyy, yyyy-mm-dd, "10 August 2026", etc.
@@ -330,7 +331,102 @@ function preSolveSpecificLetters(letters) {
 // Single entry point for both flavors of #easy — a string means specific
 // letters, anything else (bare/true/a number) means the percentage-based
 // mechanic below.
+// ── Lifetime stats (streak, star history) — localStorage, same pattern
+// as the per-puzzle progress-save already used elsewhere in the game.
+const STATS_KEY = 'xrdica-stats';
+const MAX_RECORDED_KEYS = 60; // bounded; only needed to prevent near-term double-counting on reload
+
+function loadStats() {
+  const fallback = { gamesPlayed: 0, totalScore: 0, dailyStreak: 0, bestDailyStreak: 0,
+    lastDailyCompletedDate: null, starCounts: {0:0,1:0,2:0,3:0,4:0}, recordedKeys: [] };
+  try {
+    const raw = localStorage.getItem(STATS_KEY);
+    if (!raw) return fallback;
+    const p = JSON.parse(raw);
+    return {
+      gamesPlayed: p.gamesPlayed || 0,
+      totalScore: p.totalScore || 0,
+      dailyStreak: p.dailyStreak || 0,
+      bestDailyStreak: p.bestDailyStreak || 0,
+      lastDailyCompletedDate: p.lastDailyCompletedDate || null,
+      starCounts: Object.assign({0:0,1:0,2:0,3:0,4:0}, p.starCounts || {}),
+      recordedKeys: Array.isArray(p.recordedKeys) ? p.recordedKeys : [],
+    };
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function saveStats(stats) {
+  try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch (e) {}
+}
+
+// ── Star rating — fixed thresholds regardless of puzzle size or type
+// (daily/random/themed all use the same bar, per Pehr: "not the
+// Olympics"). Never computed/shown/recorded for Easy Mode games — see
+// IS_EASY_ACTIVE — since pre-solved tiles make a low score meaningfully
+// easier to reach, not a comparable achievement.
+function computeStars(finalScore) {
+  if (finalScore < 90)  return 4;
+  if (finalScore < 125) return 3;
+  if (finalScore < 200) return 2;
+  if (finalScore < 300) return 1;
+  return 0;
+}
+
+// ── Record a completed (non-Easy-Mode) game into lifetime stats. Guards
+// against double-counting the same puzzle attempt (e.g. reloading the
+// page after finishing) via a bounded list of recently-recorded puzzle
+// keys. Daily streaks only advance for the actual daily puzzle — random/
+// themed completions count toward gamesPlayed/totalScore/starCounts but
+// don't touch the streak, since they're not a once-a-day commitment.
+// Returns { stats, stars } for display, or null if this was Easy Mode or
+// already recorded.
+function recordGameCompletion() {
+  if (IS_EASY_ACTIVE) return null;
+
+  const stars = computeStars(score);
+  const key = `${wordListFile}|${PUZZLE_SEED}`;
+  const stats = loadStats();
+
+  // Already recorded (e.g. a page reload after finishing) — stars still
+  // display below, since the player did earn them, but lifetime stats
+  // (games played, streak, totals) must not be counted a second time.
+  if (stats.recordedKeys.includes(key)) return { stats, stars };
+
+  stats.gamesPlayed += 1;
+  stats.totalScore += score;
+  stats.starCounts[stars] = (stats.starCounts[stars] || 0) + 1;
+
+  if (IS_DAILY) {
+    const today = TODAY_DATE_DASHED;
+    if (stats.lastDailyCompletedDate) {
+      const prev = new Date(stats.lastDailyCompletedDate + 'T00:00:00');
+      const todayDate = new Date(today + 'T00:00:00');
+      const diffDays = Math.round((todayDate - prev) / 86400000);
+      if (diffDays === 1) {
+        stats.dailyStreak += 1;
+      } else if (diffDays !== 0) {
+        stats.dailyStreak = 1;
+      }
+    } else {
+      stats.dailyStreak = 1;
+    }
+    stats.lastDailyCompletedDate = today;
+    if (stats.dailyStreak > stats.bestDailyStreak) stats.bestDailyStreak = stats.dailyStreak;
+  }
+
+  stats.recordedKeys.push(key);
+  if (stats.recordedKeys.length > MAX_RECORDED_KEYS) {
+    stats.recordedKeys = stats.recordedKeys.slice(-MAX_RECORDED_KEYS);
+  }
+
+  saveStats(stats);
+  return { stats, stars };
+}
+
 function applyEasyMode(meta) {
+  IS_EASY_ACTIVE = true;
   if (typeof meta.easy === 'string') {
     preSolveSpecificLetters(meta.easy);
   } else {
@@ -1250,6 +1346,8 @@ function checkGameOver() {
   clearInterval(scoreTimer);
   updateMaxRowsNote(); // hide the "all rows revealed" note — final score is showing now
 
+  const statsResult = recordGameCompletion(); // null if Easy Mode or already recorded (e.g. a reload)
+
   const scoreEl = document.getElementById('score');
   scoreEl.classList.add('final');
   let finalHtml = `Final Score: <span id="score-value" class="final-value">${score}</span>` +
@@ -1259,6 +1357,20 @@ function checkGameOver() {
     finalHtml += `<span class="puzzle-number"> · ${seedSubtitle(PUZZLE_SEED)}</span>`;
   }
   scoreEl.innerHTML = finalHtml;
+
+  // Stars/streak render in their own element, not inside #score — that
+  // element pulses (animates opacity) once .final is applied, and stars
+  // nested inside it would visually inherit the pulse too.
+  if (statsResult) {
+    const extrasEl = document.getElementById('final-extras');
+    const starStr = '★'.repeat(statsResult.stars);
+    let extrasHtml = `<div class="star-rating">${starStr}</div>`;
+    if (IS_DAILY && statsResult.stats.dailyStreak > 1) {
+      extrasHtml += `<div class="streak-note">🔥 ${statsResult.stats.dailyStreak}-day streak</div>`;
+    }
+    extrasEl.innerHTML = extrasHtml;
+    extrasEl.style.display = 'block';
+  }
 
   const shareBtn = document.getElementById('share-btn');
   if (shareBtn) shareBtn.style.display = 'inline-block';
@@ -1288,7 +1400,12 @@ function shareResult() {
   const tileBar = Array.from(
     '🟩'.repeat(filled) + '⬜'.repeat(empty)
   ).join('\u2009'); // thin space between tiles — a full space reads too wide
-  const text = `XRDICA — ${label}\n${tileBar}\nScore ${score}\nxrdica.com`;
+  // Stars: recomputed fresh from the final score rather than reusing
+  // checkGameOver()'s result, since that's not stored anywhere — cheap
+  // and stateless either way. Omitted entirely for Easy Mode, same as
+  // the on-screen rating.
+  const starLine = IS_EASY_ACTIVE ? '' : `\n${'★'.repeat(computeStars(score))}`;
+  const text = `XRDICA — ${label}\n${tileBar}${starLine}\nScore ${score}\nxrdica.com`;
 
   const btn = document.getElementById('share-btn');
   const originalText = btn ? btn.textContent : null;
@@ -1555,7 +1672,7 @@ function togglePause() {
 let autoPausedByBlur = false; // true only if THIS code paused the game (not a modal)
 
 function isAnyModalOpen() {
-  return ['archive-overlay', 'random-overlay', 'easy-overlay', 'puzzle-overlay', 'about-overlay']
+  return ['archive-overlay', 'random-overlay', 'easy-overlay', 'puzzle-overlay', 'about-overlay', 'stats-overlay']
     .some(id => document.getElementById(id)?.style.display === 'flex');
 }
 
@@ -1597,6 +1714,46 @@ async function toggleArchive() {
   }
 
   await renderArchiveCalendar();
+}
+
+function toggleStats() {
+  const overlay = document.getElementById('stats-overlay');
+  overlay.style.display = 'flex';
+  if (!paused) togglePause();
+  renderStats();
+}
+
+function closeStats() {
+  document.getElementById('stats-overlay').style.display = 'none';
+  if (paused) togglePause();
+}
+
+// ── Lifetime stats — streak, games played, average score, star
+// distribution. Easy Mode games never contribute to any of this (see
+// recordGameCompletion()).
+function renderStats() {
+  const el = document.getElementById('stats-panel');
+  if (!el) return;
+  const stats = loadStats();
+  if (stats.gamesPlayed === 0) {
+    el.innerHTML = '<p class="stats-empty">No completed games yet — solve a puzzle to start tracking stats.</p>';
+    return;
+  }
+  const avg = Math.round(stats.totalScore / stats.gamesPlayed);
+  const starRows = [4, 3, 2, 1, 0].map(n => {
+    const count = stats.starCounts[n] || 0;
+    const stars = n > 0 ? '★'.repeat(n) : '(no stars)';
+    return `<div class="stats-star-row"><span class="stats-star-icons">${stars}</span><span class="stats-star-count">${count}</span></div>`;
+  }).join('');
+  el.innerHTML = `
+    <div class="stats-summary">
+      <div><span class="stats-value">${stats.dailyStreak}</span><span class="stats-label">Current streak</span></div>
+      <div><span class="stats-value">${stats.bestDailyStreak}</span><span class="stats-label">Best streak</span></div>
+      <div><span class="stats-value">${stats.gamesPlayed}</span><span class="stats-label">Games played</span></div>
+      <div><span class="stats-value">${avg}</span><span class="stats-label">Avg. score</span></div>
+    </div>
+    <div class="stats-star-breakdown">${starRows}</div>
+  `;
 }
 
 function closeArchive() {

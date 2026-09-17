@@ -1,5 +1,5 @@
 /* Copyright (c) 2025 Pehr Jansson. All rights reserved. */
-/* XRDICA v0.0.52 */
+/* XRDICA v0.0.57 */
 
 /* ── Reset & base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -255,6 +255,7 @@ h1 {
   color: #888;
   font-size: 0.8rem;
   font-weight: 600;
+  line-height: 1.2; /* explicit, not browser-default "normal" — #stats-btn matches this exact value so both button types compute the same height via the same padding+line-height formula, rather than one guessing the other's rendered size */
   cursor: pointer;
   letter-spacing: 0.05em;
   transition: border-color 0.2s, color 0.2s;
@@ -262,6 +263,34 @@ h1 {
 
 #pause-btn:hover, #random-btn:hover, #easy-btn:hover, #archive-btn:hover, #share-btn:hover, #daily-btn:hover {
   border-color: #333;
+  color: #333;
+}
+
+/* ── Stats icon button — sits inline with the other header buttons,
+   same height/margin rhythm, but icon-only rather than text ── */
+#stats-btn {
+  margin-top: 8px;
+  padding: 6px 12px;
+  line-height: 1.2; /* matches the text buttons exactly — see the comment on that rule */
+  background: #f0f0f0;
+  border: none;
+  border-radius: 10px;
+  color: #555;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#stats-btn svg {
+  width: 15.36px;  /* 0.8rem font-size × 1.2 line-height, so the icon exactly fills the same line-box the text buttons' own text occupies */
+  height: 15.36px;
+  display: block;
+}
+
+#stats-btn:hover {
+  background: #e2e2e2;
   color: #333;
 }
 
@@ -300,20 +329,20 @@ h1 {
   position: absolute;
   top: 16px;
   right: 16px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid #ccc;
-  background: transparent;
-  color: #888;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: none;
+  background: #f0f0f0;
+  color: #555;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
 
 #about-btn:hover {
-  border-color: #333;
+  background: #e2e2e2;
   color: #333;
 }
 
@@ -495,6 +524,21 @@ h1 {
   font-size: 0.85rem;
   color: #888;
   font-weight: 400;
+}
+
+/* ── Star rating shown at game over (skipped entirely for Easy Mode) ── */
+.star-rating {
+  font-size: 1.6rem;
+  letter-spacing: 0.1em;
+  color: #d4a017;
+  margin-top: 8px;
+}
+
+/* ── Daily streak note shown at game over ── */
+.streak-note {
+  font-size: 0.9rem;
+  color: #888;
+  margin-top: 4px;
 }
 
 /* ── Puzzle number modal ── */
@@ -733,6 +777,102 @@ h1 {
   grid-template-columns: repeat(7, 1fr);
   gap: 2px;
   margin-bottom: 16px;
+}
+
+/* ── Stats modal ── */
+#stats-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #0004;
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+
+#stats-modal {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 28px;
+  max-width: 320px;
+  width: 90%;
+  text-align: center;
+}
+
+#stats-modal h2 {
+  font-size: 1.1rem;
+  color: #111;
+  margin-bottom: 16px;
+}
+
+#stats-close-btn {
+  margin-top: 16px;
+  padding: 8px 24px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: transparent;
+  color: #888;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+#stats-close-btn:hover { border-color: #333; color: #333; }
+
+.stats-empty {
+  font-size: 0.85rem;
+  color: #888;
+  text-align: center;
+}
+
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px 8px;
+  margin-bottom: 16px;
+}
+
+.stats-summary > div {
+  text-align: center;
+}
+
+.stats-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #111;
+}
+
+.stats-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #888;
+  letter-spacing: 0.03em;
+}
+
+.stats-star-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+}
+
+.stats-star-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.stats-star-icons {
+  color: #d4a017;
+  letter-spacing: 0.05em;
+}
+
+.stats-star-count {
+  color: #888;
+  font-weight: 600;
 }
 
 .cal-day {
