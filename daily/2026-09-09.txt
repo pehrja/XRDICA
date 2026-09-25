@@ -4,13 +4,13 @@
 #interval: 50
 #penalty: 2
 
-schooner
-fibers
-squirrels
-allowed
-detained
-rewritten
-inexact
-deformity
+schooners
+fibre
+squirts
 alluding
-fasted
+desecrate
+rhomboids
+intaglio
+departer
+allying
+explicate

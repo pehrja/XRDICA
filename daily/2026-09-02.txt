@@ -4,13 +4,13 @@
 #interval: 50
 #penalty: 2
 
-cartilage
-structures
-doors
-vampires
-lying
-touchier
-predatory
-hybridised
-bumbles
-plaid
+carter
+strider
+drachma
+vainglory
+melting
+torpid
+professor
+hoaxer
+broodiness
+pliers

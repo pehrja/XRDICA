@@ -4,13 +4,13 @@
 #interval: 50
 #penalty: 2
 
-narrowness
-slices
-puree
-pulsate
-cahoots
-syndicated
-defections
-depleted
-scour
-uncivil
+nastier
+sleazier
+prowler
+provoked
+cairns
+tableland
+delusion
+desire
+scarlet
+unbowed

@@ -4,13 +4,13 @@
 #interval: 50
 #penalty: 2
 
-civilian
-alleviated
-venose
-beadles
-imprisoned
-odiums
-fireplaces
-verified
-rigidifies
-insurgents
+civies
+alienation
+verbatim
+becomes
+impotent
+offending
+fleetingly
+varsity
+reunites
+inanity

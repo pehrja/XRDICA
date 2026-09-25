@@ -4,13 +4,13 @@
 #interval: 50
 #penalty: 2
 
-cavernous
-slanting
-crispness
-commenting
-founder
-fairs
-techniques
-bifurcated
-dearly
-network
+cavemen
+slithers
+creeping
+commenter
+foreword
+farriers
+tassel
+birdtables
+currant
+mutation

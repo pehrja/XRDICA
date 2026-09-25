@@ -4,13 +4,13 @@
 #interval: 50
 #penalty: 2
 
-tainted
-history
-absorbed
-accent
-lapdog
-neutral
-chauvinism
-walltowall
-neptune
-defames
+taints
+hemmed
+absorbency
+acceded
+leanness
+noxious
+cheaper
+wagging
+nastiest
+deepfrozen

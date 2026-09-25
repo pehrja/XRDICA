@@ -4,13 +4,13 @@
 #interval: 50
 #penalty: 2
 
-propriety
-murkier
-customary
-apparent
-unluckiest
-vassals
-spikes
-streakier
-delicacy
-details
+propylene
+mysterious
+culpable
+applecart
+unpaired
+vanquished
+spongy
+stronghold
+decode
+deprive

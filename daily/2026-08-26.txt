@@ -4,13 +4,13 @@
 #interval: 50
 #penalty: 2
 
-condensing
-explained
-unsettle
-toppling
-railing
-extremal
-clonal
-shrink
-bunting
-railways
+condenses
+exposures
+unsettling
+toning
+putsch
+faltering
+climber
+shinned
+bylaws
+raincloud

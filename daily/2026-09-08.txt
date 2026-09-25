@@ -4,13 +4,13 @@
 #interval: 50
 #penalty: 2
 
-assent
-finished
-aweless
-tumble
-screeching
-flavours
-envelope
-joyriders
-cyberpunk
-smouldered
+assenting
+filigree
+awakens
+turbo
+scurrying
+flicking
+epithet
+joyous
+dated
+slanted
