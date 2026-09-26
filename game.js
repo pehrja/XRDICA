@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
-// XRDICA v0.0.58
+// XRDICA v0.0.59
 
 // ── Game state ──
 let WORD_LIST     = [];
@@ -161,7 +161,12 @@ const listParam    = urlParams.get('list');
 const DAILY_FILE   = `daily/${TODAY_DATE_DASHED}.txt`; // e.g. daily/2026-08-17.txt
 const wordListFile = listParam || DAILY_FILE;
 const IS_DAILY     = !listParam;
-const IS_RANDOM    = listParam === 'wordlists/wordlist.txt';
+// Any of the day-specific auto-generated pools count as "random mode"
+// for labeling purposes (date subtitle, share text, etc.) — not just
+// the original wordlist.txt — since they're all the same kind of
+// auto-generated puzzle, just drawing from a different day's pool.
+const AUTO_GENERATED_WORDLISTS = ['wordlists/wordlist.txt', 'wordlists/monday.txt', 'wordlists/tuesday.txt', 'wordlists/wednesday.txt', 'wordlists/thursday.txt'];
+const IS_RANDOM    = AUTO_GENERATED_WORDLISTS.includes(listParam);
 
 // ── Puzzle date for display ──
 // Never sourced from a #date meta line (deprecated/ignored) — the date
@@ -221,6 +226,27 @@ const IS_EASY_RANDOM = IS_RANDOM && PUZZLE_SEED > EASY_SEED_OFFSET && PUZZLE_SEE
 const PROGRESS_KEY = 'xrdica-progress:' + wordListFile + (PUZZLE_SEED !== null ? ':' + PUZZLE_SEED : '');
 
 // ── Load word list — with fallback for missing daily ──
+// Map a given date (YYYY-MM-DD) to the appropriate wordlist for
+// progressive difficulty (Mon=easiest ramping up through Fri=hardest;
+// Sat mirrors Friday, Sun mirrors Thursday) — used both for today's
+// auto-generated fallback and for the Archive calendar's fallback link
+// on a past date with no curated file, so a given date's difficulty
+// stays consistent regardless of which path loads it.
+function fallbackWordlistForDate(dateDashed) {
+  const [y, m, d] = dateDashed.split('-').map(Number);
+  const dayOfWeek = new Date(y, m - 1, d).getDay(); // 0=Sun ... 6=Sat
+  const byDay = {
+    0: 'wordlists/thursday.txt',  // Sunday mirrors Thursday
+    1: 'wordlists/monday.txt',
+    2: 'wordlists/tuesday.txt',
+    3: 'wordlists/wednesday.txt',
+    4: 'wordlists/thursday.txt',
+    5: 'wordlists/wordlist.txt',  // Friday — full pool, unrestricted
+    6: 'wordlists/wordlist.txt',  // Saturday mirrors Friday
+  };
+  return byDay[dayOfWeek];
+}
+
 async function loadWithFallback() {
   if (IS_DAILY) {
     try {
@@ -233,10 +259,12 @@ async function loadWithFallback() {
       }
     } catch(e) {}
     // Fallback: no curated file for today — auto-generate a puzzle from
-    // wordlists/wordlist.txt. Seed is already set (see "Determine seed" above,
-    // branch 3) from today's date, so this is identical for every
-    // player regardless of whether a curated file existed.
-    return await loadWordList('wordlists/wordlist.txt');
+    // the day-appropriate wordlist (see fallbackWordlistForToday() above
+    // for the progressive-difficulty mapping). Seed is already set (see
+    // "Determine seed" above, branch 3) from today's date, so this is
+    // identical for every player regardless of whether a curated file
+    // existed.
+    return await loadWordList(fallbackWordlistForDate(TODAY_DATE_DASHED));
   } else {
     const result = await loadWordList(wordListFile);
     return await resolveWordlistReference(result);
@@ -1849,7 +1877,7 @@ async function renderArchiveCalendar() {
           window.location.href = `index.html?list=daily/${dateStr}.txt`;
         } else {
           const dateSeedInt = parseInt(dateStr.replace(/-/g, '')); // YYYYMMDD
-          window.location.href = `index.html?list=wordlists/wordlist.txt&seed=${dateSeedInt}`;
+          window.location.href = `index.html?list=${fallbackWordlistForDate(dateStr)}&seed=${dateSeedInt}`;
         }
       });
       checks.push(
