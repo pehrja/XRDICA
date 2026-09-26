@@ -9784,7 +9784,6 @@ besteading
 besteads
 bested
 bestial
-bestiality
 bestialize
 bestially
 bestiaries
@@ -18416,7 +18415,6 @@ chivvying
 chivy
 chivying
 chlamydes
-chlamydia
 chlamydiae
 chlamydial
 chlamys
@@ -43290,7 +43288,6 @@ geniuses
 genoa
 genoas
 genocidal
-genocide
 genocides
 genoise
 genoises
@@ -44736,7 +44733,6 @@ gonophores
 gonophs
 gonopore
 gonopores
-gonorrhea
 gonorrheal
 gonorrheas
 gonzo
@@ -48584,7 +48580,6 @@ heronries
 heronry
 herons
 heros
-herpes
 herpetic
 herrenvolk
 herried
@@ -51875,9 +51870,7 @@ inceptors
 incepts
 incessancy
 incessant
-incest
 incests
-incestuous
 inched
 inches
 inching
@@ -60675,12 +60668,9 @@ lymphomata
 lymphs
 lyncean
 lynch
-lynched
 lyncher
 lynchers
 lynches
-lynching
-lynchings
 lynchpin
 lynchpins
 lynxes
@@ -65368,11 +65358,7 @@ molehills
 moles
 moleskin
 moleskins
-molest
-molested
-molester
 molesters
-molesting
 molests
 molies
 moline
@@ -67009,11 +66995,8 @@ muter
 mutes
 mutest
 muticous
-mutilate
-mutilated
 mutilates
 mutilating
-mutilation
 mutilator
 mutilators
 mutine
@@ -67666,7 +67649,6 @@ nazified
 nazifies
 nazify
 nazifying
-nazis
 neaps
 nearby
 neared
@@ -75501,9 +75483,7 @@ pedologist
 pedology
 pedometer
 pedometers
-pedophile
 pedophiles
-pedophilia
 pedophilic
 pedro
 pedros
@@ -98203,15 +98183,8 @@ sodom
 sodomies
 sodomist
 sodomists
-sodomite
-sodomites
 sodomitic
-sodomize
-sodomized
-sodomizes
-sodomizing
 sodoms
-sodomy
 soever
 sofar
 sofars
@@ -101818,11 +101791,9 @@ strangered
 strangers
 strangest
 strangle
-strangled
 strangler
 stranglers
 strangles
-strangling
 strangury
 strap
 straphang
@@ -104772,9 +104743,7 @@ sypher
 syphered
 syphering
 syphers
-syphilis
 syphilises
-syphilitic
 syphon
 syphoned
 syphoning
@@ -108674,12 +108643,8 @@ torts
 tortuosity
 tortuous
 tortuously
-torture
-tortured
-torturer
 torturers
 tortures
-torturing
 torturous
 torula
 torulae
@@ -118166,7 +118131,6 @@ whops
 whored
 whoredom
 whoredoms
-whorehouse
 whoreson
 whoresons
 whoring
