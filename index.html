@@ -1,4 +1,4 @@
-<!-- XRDICA v0.0.59 build 2026-09-26 -->
+<!-- XRDICA v0.0.69 build 2026-10-08 -->
 <!-- Copyright (c) 2025 Pehr Jansson. All rights reserved. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -24,6 +24,7 @@
     <p id="game-theme" style="display:none"></p>
     <div id="score">Score: <span id="score-value">0</span></div>
     <div id="final-extras" style="display:none"></div>
+    <div id="definitions-panel" style="display:none"></div>
     <p id="max-rows-note" style="display:none">All rows revealed — no more will appear as your score increases.</p>
     <button id="share-btn" onclick="shareResult()" style="display:none">Share Result</button>
     <button id="pause-btn" onclick="togglePause()">Pause</button>
@@ -39,6 +40,7 @@
     </button>
     <button id="daily-btn" onclick="window.location.href='index.html'" style="display:none">Today's Puzzle</button>
     <button id="about-btn" onclick="toggleAbout()">?</button>
+    <select id="lang-select" onchange="switchLanguage(this.value)" title="Language" aria-label="Language"></select>
   </header>
 
   <!-- Stats modal -->
@@ -174,6 +176,6 @@
   <script src="words.js?v=9"></script>
   <script src="game.js?v=41"></script>
 
-  <footer id="version">XRDICA v0.0.59</footer>
+  <footer id="version">XRDICA v0.0.69</footer>
 </body>
 </html>

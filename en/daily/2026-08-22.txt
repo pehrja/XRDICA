@@ -1,0 +1,16 @@
+#mode: static
+#start-lines: 4
+#max-lines: 10
+#interval: 50
+#penalty: 2
+
+cavemen
+slithers
+creeping
+commenter
+foreword
+farriers
+tassel
+birdtables
+currant
+mutation

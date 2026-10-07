@@ -1,0 +1,13 @@
+Spanish word list (wordlist.txt)
+
+Derived from "FrequencyWords" by Hermit Dave
+(https://github.com/hermitdave/FrequencyWords), the Spanish OpenSubtitles 2018
+frequency list, which is licensed CC BY-SA 4.0
+(https://creativecommons.org/licenses/by-sa/4.0/).
+
+Adapted for XRDICA: restricted to words of 5-10 letters; checked against a
+spelling dictionary to remove names, foreign words and typos (Spanish dictionary for LibreOffice/Hunspell (triple-licensed GPL-3.0+ / LGPL-3.0+ / MPL-1.1+) -
+used only as a filter, not redistributed); vulgar and offensive terms removed;
+limited to the 20,000 most frequent remaining words.
+
+This adapted list is shared under the same license, CC BY-SA 4.0.

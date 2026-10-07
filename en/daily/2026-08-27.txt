@@ -1,0 +1,23 @@
+#mode: static
+#title-reveal: Six-letter cities
+#author: Xrdica
+#alphabet: abcdefghijklmnopqrstuvwxyz
+#start-lines: 4
+#max-lines: 15
+#penalty: 2
+
+London
+Berlin
+Austin
+Warsaw
+Bogota
+Fresno
+Vienna
+Sydney
+Zurich
+Havana
+Mumbai
+Venice
+Dublin
+Boston
+Ottawa

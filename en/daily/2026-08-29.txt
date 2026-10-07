@@ -1,0 +1,16 @@
+#mode: static
+#start-lines: 4
+#max-lines: 10
+#interval: 50
+#penalty: 2
+
+propylene
+mysterious
+culpable
+applecart
+unpaired
+vanquished
+spongy
+stronghold
+decode
+deprive

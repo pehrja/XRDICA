@@ -1,0 +1,25 @@
+#mode: static
+#title-reveal: Common Birds
+#author: Xrdica
+#date: 08172026
+#alphabet: \ abcdefghijklmnopqrstuvwxyz
+#start-lines: 3
+#max-lines: 15
+#penalty: 2
+
+Cardinal
+Wood duck
+Egret
+Oyster catcher
+Robin
+Chickadee 
+Blue jay
+Mourning dove
+Heron
+Mockingbird 
+Wren
+Starling
+Hummingbird
+Titmouse 
+Swallow
+Finch

@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
-// XRDICA v0.0.59
+// XRDICA v0.0.69
 
 // ── Game state ──
 let WORD_LIST     = [];
@@ -116,8 +116,8 @@ const EASY_PRESOLVE_PERCENT = 0.20; // target fraction of the initial rows' tile
 // reveals them and stickily remembers that choice via localStorage for
 // future visits; ?modes=0 explicitly re-locks (handy for testing without
 // digging into DevTools). Buttons only — the underlying URLs these
-// buttons link to (e.g. ?list=wordlists/wordlist.txt&seed=N) are untouched either
-// way, so an existing bookmark or shared link still works regardless.
+// buttons link to (e.g. ?list=en/wordlists/wordlist.txt&seed=N) are untouched
+// either way, so an existing bookmark or shared link still works regardless.
 const MODES_UNLOCK_KEY = 'xrdica-modes-unlocked';
 const modesParam = urlParams.get('modes');
 if (modesParam === '1') {
@@ -153,19 +153,114 @@ const TODAY_DATE_DASHED = localDateDashed();               // YYYY-MM-DD, local
 const TODAY_DATE        = TODAY_DATE_DASHED.replace(/-/g, ''); // YYYYMMDD
 const TODAY_DATE_INT    = parseInt(TODAY_DATE);  // e.g. 20260814 — used as date seed
 
+// ── Language support ──
+// Each supported language's content lives under its own top-level
+// folder — en/daily/, en/wordlists/, sv/daily/, sv/wordlists/, etc. —
+// the exact same daily/wordlists structure XRDICA already used, just
+// nested one level under a language code. A bare visit with no
+// language signal at all still resolves to English, so this is
+// invisible to an English player who's never touched the switcher.
+// tiered: true means the language has the five day-of-week difficulty
+// files (monday.txt ... thursday.txt + wordlist.txt); false means it has
+// only wordlist.txt, used every day. Flip a language to true once its
+// tier files exist.
+const SUPPORTED_LANGUAGES = {
+  // definitions: whether the post-game word-definitions panel is shown.
+  // Off for every non-English language for now — the lookup reads the
+  // English section of en.wiktionary, uses base-letter spellings, and only
+  // follows English-style inflection pointers, so it is wrong or empty
+  // for these languages until that is reworked and spot-checked.
+  en: { name: 'English', tiered: true, definitions: true },
+  // alphabet: the letters that get their OWN cipher number and their own key.
+  // Anything with an accent that is NOT listed folds to its base letter
+  // (typed plain, shown accented once solved), so French and Czech need no
+  // entry: they play on the standard 26. This is only the default for files
+  // in that language — a file's own #alphabet line always wins.
+  sv: { name: 'Svenska', tiered: false, alphabet: 'abcdefghijklmnopqrstuvwxyzåäö' },
+  fr: { name: 'Français', tiered: false },
+  es: { name: 'Español', tiered: false, alphabet: 'abcdefghijklmnopqrstuvwxyzñ' },
+  cs: { name: 'Čeština', tiered: false },
+};
+const DEFAULT_LANGUAGE = 'en';
+
+function detectLanguage() {
+  // 1. Explicit URL override
+  const langParam = urlParams.get('lang');
+  if (langParam && SUPPORTED_LANGUAGES[langParam]) return langParam;
+  // 2. Sticky choice from a previous visit
+  try {
+    const saved = localStorage.getItem('xrdica-language');
+    if (saved && SUPPORTED_LANGUAGES[saved]) return saved;
+  } catch (e) {}
+  // 3. The browser's own configured language — reflects what the
+  // player's browser/OS is actually set to, not where their network
+  // connection happens to be routed from (deliberately not IP-based
+  // geolocation, which gets this wrong for travelers/VPN users)
+  if (typeof navigator !== 'undefined' && navigator.language) {
+    const primary = navigator.language.split('-')[0].toLowerCase();
+    if (SUPPORTED_LANGUAGES[primary]) return primary;
+  }
+  return DEFAULT_LANGUAGE;
+}
+
+const CURRENT_LANGUAGE = detectLanguage();
+// Persist whatever we land on (URL override, prior visit, or a fresh
+// browser-language detection) as the sticky choice for next visit.
+try { localStorage.setItem('xrdica-language', CURRENT_LANGUAGE); } catch (e) {}
+
+// Default alphabet for files in the current language (undefined for English).
+const LANG_ALPHABET = (SUPPORTED_LANGUAGES[CURRENT_LANGUAGE] || {}).alphabet;
+function alphabetForFile(path) {
+  return (path && path.indexOf(CURRENT_LANGUAGE + '/') === 0) ? LANG_ALPHABET : undefined;
+}
+
+// Populates the header's language dropdown and wires up switching.
+// Called once, right here, so CURRENT_LANGUAGE/SUPPORTED_LANGUAGES are
+// already resolved by the time it runs.
+function populateLanguageSelector() {
+  const select = document.getElementById('lang-select');
+  if (!select) return;
+  select.innerHTML = Object.entries(SUPPORTED_LANGUAGES)
+    .map(([code, info]) => `<option value="${code}"${code === CURRENT_LANGUAGE ? ' selected' : ''}>${info.name}</option>`)
+    .join('');
+}
+populateLanguageSelector();
+
+// Switching language always starts fresh on that language's own daily
+// puzzle (not whatever random/dated file happened to be open), since a
+// mid-puzzle switch has no meaningful "same puzzle" to carry over into
+// a different word pool entirely.
+// Pure URL builders, kept separate from the window.location.href side
+// effect below each one — jsdom (used for testing) doesn't implement
+// real cross-document navigation, so a pure function is what's actually
+// testable; the side-effecting caller stays a one-line wrapper.
+function switchLanguageUrl(lang) {
+  return `index.html?lang=${lang}`;
+}
+function switchLanguage(lang) {
+  if (!SUPPORTED_LANGUAGES[lang]) return;
+  window.location.href = switchLanguageUrl(lang);
+}
+
 // ── Determine word list file ──
 // If ?list= is specified use that, otherwise try today's daily file.
 // All daily puzzles — past, today, and any staged ahead of time — live
-// in the daily/ folder, named by date: daily/YYYY-MM-DD.txt.
+// in <language>/daily/, named by date: en/daily/YYYY-MM-DD.txt.
 const listParam    = urlParams.get('list');
-const DAILY_FILE   = `daily/${TODAY_DATE_DASHED}.txt`; // e.g. daily/2026-08-17.txt
+const DAILY_FILE   = `${CURRENT_LANGUAGE}/daily/${TODAY_DATE_DASHED}.txt`; // e.g. en/daily/2026-08-17.txt
 const wordListFile = listParam || DAILY_FILE;
 const IS_DAILY     = !listParam;
 // Any of the day-specific auto-generated pools count as "random mode"
 // for labeling purposes (date subtitle, share text, etc.) — not just
 // the original wordlist.txt — since they're all the same kind of
 // auto-generated puzzle, just drawing from a different day's pool.
-const AUTO_GENERATED_WORDLISTS = ['wordlists/wordlist.txt', 'wordlists/monday.txt', 'wordlists/tuesday.txt', 'wordlists/wednesday.txt', 'wordlists/thursday.txt'];
+const AUTO_GENERATED_WORDLISTS = [
+  `${CURRENT_LANGUAGE}/wordlists/wordlist.txt`,
+  `${CURRENT_LANGUAGE}/wordlists/monday.txt`,
+  `${CURRENT_LANGUAGE}/wordlists/tuesday.txt`,
+  `${CURRENT_LANGUAGE}/wordlists/wednesday.txt`,
+  `${CURRENT_LANGUAGE}/wordlists/thursday.txt`,
+];
 const IS_RANDOM    = AUTO_GENERATED_WORDLISTS.includes(listParam);
 
 // ── Puzzle date for display ──
@@ -174,8 +269,15 @@ const IS_RANDOM    = AUTO_GENERATED_WORDLISTS.includes(listParam);
 // daily/YYYY-MM-DD.txt for both today's live daily and any archived
 // date. Non-daily puzzle files (e.g. ?list=mystery1.txt) have no
 // associated date and simply show no date subtitle.
-const dailyDateMatch = wordListFile.match(/^daily\/(\d{4}-\d{2}-\d{2})\.txt$/);
-const PUZZLE_DATE_DASHED = dailyDateMatch ? dailyDateMatch[1] : null;
+// The path may carry a language prefix (en/daily/2026-09-28.txt).
+const dailyDateMatch = wordListFile.match(/^(?:([a-z]{2})\/)?daily\/(\d{4}-\d{2}-\d{2})\.txt$/);
+// An explicit ?date= (used by Archive links for dates with no curated
+// file, which load a wordlist directly rather than a dated file) carries
+// the date for display purposes only.
+const dateParamRaw = urlParams.get('date');
+const VALID_DATE_PARAM = (dateParamRaw && /^\d{4}-\d{2}-\d{2}$/.test(dateParamRaw)) ? dateParamRaw : null;
+const PUZZLE_DATE_DASHED = dailyDateMatch ? dailyDateMatch[2] : VALID_DATE_PARAM;
+const PUZZLE_DATE_LANG = (dailyDateMatch && dailyDateMatch[1]) ? dailyDateMatch[1] : CURRENT_LANGUAGE;
 
 // ── Determine seed ──
 // A puzzle's seed drives its cipher shuffle (and, for random-mode
@@ -202,8 +304,11 @@ if (seedParam) {
   newUrl.searchParams.set('seed', PUZZLE_SEED);
   window.history.replaceState({}, '', newUrl);
 } else if (PUZZLE_DATE_DASHED) {
-  // Dated puzzle — same cipher for every player, every day
-  PUZZLE_SEED = parseInt(PUZZLE_DATE_DASHED.replace(/-/g, ''));
+  // Dated puzzle — same cipher for every player, every day. See
+  // dateSeedFor(): English keeps its original raw-date seeds exactly
+  // (so nothing changes for English history or players), while every
+  // other language gets a genuinely independent seed for the same date.
+  PUZZLE_SEED = dateSeedFor(PUZZLE_DATE_DASHED, PUZZLE_DATE_LANG);
 } else {
   // Any other specific file — deterministic from its name
   PUZZLE_SEED = hashStringToSeed(wordListFile);
@@ -232,19 +337,35 @@ const PROGRESS_KEY = 'xrdica-progress:' + wordListFile + (PUZZLE_SEED !== null ?
 // auto-generated fallback and for the Archive calendar's fallback link
 // on a past date with no curated file, so a given date's difficulty
 // stays consistent regardless of which path loads it.
-function fallbackWordlistForDate(dateDashed) {
+// The seed for a dated puzzle. English uses the raw YYYYMMDD integer —
+// exactly what it always has, so English puzzles (past and future) are
+// completely unaffected by the multi-language work. Any other language
+// hashes its own dated-file path instead, so the same calendar date in
+// two languages gets genuinely independent ciphers and word selection
+// rather than both computing from the identical seed.
+function dateSeedFor(dateDashed, lang = CURRENT_LANGUAGE) {
+  if (lang === 'en') return parseInt(dateDashed.replace(/-/g, ''));
+  return hashStringToSeed(`${lang}/daily/${dateDashed}.txt`);
+}
+
+function fallbackWordlistForDate(dateDashed, lang = CURRENT_LANGUAGE) {
+  // A language with only a single wordlist (no tier files yet) uses it
+  // every day, rather than asking for monday.txt etc. that don't exist.
+  if (SUPPORTED_LANGUAGES[lang] && !SUPPORTED_LANGUAGES[lang].tiered) {
+    return `${lang}/wordlists/wordlist.txt`;
+  }
   const [y, m, d] = dateDashed.split('-').map(Number);
   const dayOfWeek = new Date(y, m - 1, d).getDay(); // 0=Sun ... 6=Sat
   const byDay = {
-    0: 'wordlists/thursday.txt',  // Sunday mirrors Thursday
-    1: 'wordlists/monday.txt',
-    2: 'wordlists/tuesday.txt',
-    3: 'wordlists/wednesday.txt',
-    4: 'wordlists/thursday.txt',
-    5: 'wordlists/wordlist.txt',  // Friday — full pool, unrestricted
-    6: 'wordlists/wordlist.txt',  // Saturday mirrors Friday
+    0: 'thursday.txt',  // Sunday mirrors Thursday
+    1: 'monday.txt',
+    2: 'tuesday.txt',
+    3: 'wednesday.txt',
+    4: 'thursday.txt',
+    5: 'wordlist.txt',  // Friday — full pool, unrestricted
+    6: 'wordlist.txt',  // Saturday mirrors Friday
   };
-  return byDay[dayOfWeek];
+  return `${lang}/wordlists/${byDay[dayOfWeek]}`;
 }
 
 async function loadWithFallback() {
@@ -254,7 +375,7 @@ async function loadWithFallback() {
       const res = await fetch(DAILY_FILE);
       if (res.ok) {
         const text = await res.text();
-        const result = await parseWordListText(text);
+        const result = await parseWordListText(text, LANG_ALPHABET);
         return await resolveWordlistReference(result);
       }
     } catch(e) {}
@@ -264,9 +385,10 @@ async function loadWithFallback() {
     // "Determine seed" above, branch 3) from today's date, so this is
     // identical for every player regardless of whether a curated file
     // existed.
-    return await loadWordList(fallbackWordlistForDate(TODAY_DATE_DASHED));
+    const fallbackFile = fallbackWordlistForDate(TODAY_DATE_DASHED);
+    return await loadWordList(fallbackFile, alphabetForFile(fallbackFile));
   } else {
-    const result = await loadWordList(wordListFile);
+    const result = await loadWordList(wordListFile, alphabetForFile(wordListFile));
     return await resolveWordlistReference(result);
   }
 }
@@ -668,7 +790,10 @@ loadWithFallback().then(({ meta, words, cipherAlphabet, validChars, totalLines, 
   // Show puzzle number/date in subtitle during random play
   if (IS_RANDOM && PUZZLE_SEED !== null) {
     const subtitleEl = document.getElementById('game-subtitle');
-    PUZZLE_LABEL = seedSubtitle(PUZZLE_SEED);
+    // An Archive link for a date with no curated file carries its real
+    // date in ?date= — prefer that over decoding a date back out of the
+    // seed, which only works for English's raw-date seeds.
+    PUZZLE_LABEL = VALID_DATE_PARAM ? formatPuzzleDate(VALID_DATE_PARAM) : seedSubtitle(PUZZLE_SEED);
     subtitleEl.textContent = PUZZLE_LABEL;
     subtitleEl.style.display = 'block';
   } else if (IS_DAILY && meta.mode !== 'static') {
@@ -1022,28 +1147,46 @@ function updateClearButton() {
 }
 
 // ── Build on-screen keyboard ──
+// Letters with a conventional home on a Swedish/Spanish keyboard go where
+// people expect them: å at the end of the top row, ö ä ñ at the end of the
+// home row. Any OTHER extra letter (Czech's háčky, say) gets its own row
+// above the QWERTY rows, so no single row ever gets too long.
+const KEY_PLACEMENT = { 'å': 0, 'ö': 1, 'ä': 1, 'ñ': 1 };
+const KEY_PLACEMENT_ORDER = ['å', 'ö', 'ä', 'ñ'];
+const KB_MAX_ROW_PX = 450;
+const KB_GAP_PX = 5;
+
+function keyboardLayout(alphabet) {
+  const base   = new Set('abcdefghijklmnopqrstuvwxyz'.split(''));
+  const extras = alphabet.filter(ch => ch !== ' ' && !base.has(ch));
+  const rows = [
+    ['q','w','e','r','t','y','u','i','o','p'],
+    ['a','s','d','f','g','h','j','k','l'],
+    ['z','x','c','v','b','n','m','Enter','Clear']
+  ];
+  KEY_PLACEMENT_ORDER.filter(ch => extras.includes(ch))
+    .forEach(ch => rows[KEY_PLACEMENT[ch]].push(ch));
+  rows[0].push('⌫'); // backspace sits at the right end of the top row
+  const loose = extras.filter(ch => !(ch in KEY_PLACEMENT));
+  const extraRows = [];
+  for (let i = 0; i < loose.length; i += 10) extraRows.push(loose.slice(i, i + 10));
+  return [...extraRows, ...rows];
+}
+
 function buildKeyboard(alphabet) {
   const keyboard = document.getElementById('keyboard');
   keyboard.innerHTML = '';
 
-  const qwertyRows = [
-    ['q','w','e','r','t','y','u','i','o','p'],
-    ['a','s','d','f','g','h','j','k','l'],
-    ['⌫','z','x','c','v','b','n','m','Enter','Clear']
-  ];
+  const alphabetSet = new Set(alphabet);
+  const qwertyRows  = keyboardLayout(alphabet);
 
-  const alphabetSet    = new Set(alphabet);
-  const coveredByQwerty = new Set('abcdefghijklmnopqrstuvwxyz'.split(''));
-  // Space (when present) gets its own dedicated row below, so it's
-  // excluded here from the "extra letters" squeezed into the bottom row
-  // (that treatment is for things like å ä ö).
-  const extraLetters   = alphabet.filter(ch => ch !== ' ' && !coveredByQwerty.has(ch));
-
-  if (extraLetters.length > 0) {
-    const lastRow   = qwertyRows[2];
-    const enterIdx  = lastRow.indexOf('Enter');
-    lastRow.splice(enterIdx, 0, ...extraLetters);
-  }
+  // Size the keys so the longest row fits the same width a 10-letter
+  // English row always has — a 12-key Swedish row gets slightly narrower
+  // keys instead of running off the side.
+  const visibleCount = row => row.filter(k => !(k.length === 1 && /[a-z]/.test(k) && !alphabetSet.has(k))).length;
+  const maxKeys = Math.max(...qwertyRows.map(visibleCount));
+  const keyW = Math.max(26, Math.min(36, Math.floor((KB_MAX_ROW_PX - (maxKeys - 1) * KB_GAP_PX) / maxKeys)));
+  keyboard.style.setProperty('--key-w', keyW + 'px');
 
   qwertyRows.forEach(rowKeys => {
     const rowEl = document.createElement('div');
@@ -1056,7 +1199,8 @@ function buildKeyboard(alphabet) {
       btn.classList.add('key');
       btn.textContent = k.toUpperCase();
       btn.dataset.key = k;
-      if (k === 'Enter' || k === '⌫') btn.classList.add('wide');
+      if (k === 'Enter') btn.classList.add('wide');
+      if (k === '⌫') btn.classList.add('key-back');
       if (k === 'Clear') {
         btn.id = 'clear-btn';
         btn.style.display = 'none';
@@ -1152,7 +1296,13 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  const letter = e.key.toLowerCase();
+  let letter = e.key.toLowerCase();
+  // An accent key whose letter has no cipher of its own (é on a French
+  // keyboard, ú on a Czech one) counts as its base letter — the same
+  // folding the grid itself uses.
+  if (LETTER_MAP[letter] === undefined && ACCENT_MAP[letter] && LETTER_MAP[ACCENT_MAP[letter]] !== undefined) {
+    letter = ACCENT_MAP[letter];
+  }
   if (LETTER_MAP[letter] !== undefined) {
     handleKeyInput(letter);
   }
@@ -1415,6 +1565,140 @@ function checkGameOver() {
   }
 
   saveProgress();
+  showDefinitions(); // fire-and-forget — fetches asynchronously, renders as results arrive
+}
+
+// ── Word definitions (post-game) ──────────────────────────────────
+// Fetches from Wiktionary's public REST API — no backend involved, the
+// player's own browser calls it directly. Content is CC BY-SA licensed;
+// attribution is shown alongside the results (see the credit line built
+// in showDefinitions() below). Themed puzzles (city names, etc.) often
+// have no traditional "definition" entry — those are skipped silently
+// rather than shown as an error, since that's an expected, normal case,
+// not a failure.
+// Raw single-word lookup — returns {partOfSpeech, definition (plain text)}
+// or null. Used both for the initial word and for following a
+// cross-reference (see fetchWordDefinition below).
+async function fetchRawDefinition(word) {
+  try {
+    const res = await fetch(`https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(word.toLowerCase())}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const enEntries = data.en;
+    if (!enEntries || enEntries.length === 0) return null;
+
+    // Scan every definition across every part-of-speech entry for the
+    // first one that's an actual, substantive definition — not just the
+    // very first one listed. Wiktionary frequently lists a "sum of
+    // parts" or cross-reference note ahead of a real, useful sense
+    // under the SAME heading (e.g. "body check" lists "see body, check"
+    // before its actual ice-hockey definition) — taking only defs[0]
+    // misses real content that's sitting right there in the response.
+    const toPlainText = (rawHtml) => (rawHtml || '').replace(/<[^>]+>/g, '').trim();
+    let firstAny = null; // fallback: the very first definition, whatever it is
+    for (const entry of enEntries) {
+      const defs = entry.definitions;
+      if (!defs) continue;
+      for (const d of defs) {
+        const plainText = toPlainText(d.definition);
+        if (!plainText) continue;
+        if (!firstAny) firstAny = { partOfSpeech: entry.partOfSpeech || '', definition: plainText };
+        const isCrossRef = CROSS_REF_PATTERN.test(plainText);
+        const isSop = SOP_BOILERPLATE.test(plainText);
+        if (!isCrossRef && !isSop) {
+          return { partOfSpeech: entry.partOfSpeech || '', definition: plainText };
+        }
+      }
+    }
+    // Nothing substantive anywhere in the response — fall back to
+    // whatever the very first definition was (may be a cross-reference,
+    // handled by fetchWordDefinition's follow-up logic below).
+    return firstAny;
+  } catch (e) {
+    return null; // network error, CORS issue, malformed response, etc. — fail silently
+  }
+}
+
+// Wiktionary very often gives an inflected form (plural, past tense, an
+// alternative spelling, etc.) its own page containing nothing but a
+// grammatical pointer back to the base word — "plural of pignus",
+// "simple past and past participle of halve" — with the actual meaning
+// living on THAT page instead. Left alone, that pointer is what a player
+// would see instead of a real definition. This detects that pattern and
+// extracts the base word so it can be looked up too.
+const CROSS_REF_PATTERN = /^(?:plural|singular|alternative|third-person|comparative|superlative|diminutive|feminine|masculine|(?:simple\s+)?past|present)\b.*\bof\s+([a-z][a-z\s-]*?)\.?$/i;
+
+// Wiktionary's own boilerplate for a "sum of parts" compound (a term
+// that's just its ordinary component words stuck together, not really
+// defined as its own thing) — as useless to a player as a bare
+// cross-reference, just phrased differently, so it's treated the same
+// way: something a resolved definition should never end in.
+const SOP_BOILERPLATE = /used other than figuratively or idiomatically/i;
+
+async function fetchWordDefinition(word) {
+  const primary = await fetchRawDefinition(word);
+  if (!primary) return null;
+
+  const crossRefMatch = primary.definition.match(CROSS_REF_PATTERN);
+  if (crossRefMatch) {
+    const baseWord = crossRefMatch[1].trim();
+    const resolved = await fetchRawDefinition(baseWord);
+    if (resolved && !SOP_BOILERPLATE.test(resolved.definition)) {
+      // Show both — the grammatical relationship AND the actual meaning,
+      // e.g. "simple past and past participle of halve — To divide into
+      // two equal parts." Keeps it clear this is the meaning of the
+      // related base word, not a second, separate sense of the word typed.
+      return {
+        word,
+        partOfSpeech: primary.partOfSpeech,
+        definition: `${primary.definition} — ${resolved.definition}`,
+      };
+    }
+    // Base word lookup failed, or only resolved to ANOTHER non-answer
+    // (a sum-of-parts note) — fall through and show the bare
+    // cross-reference rather than a second layer of uselessness.
+  }
+
+  return { word, partOfSpeech: primary.partOfSpeech, definition: primary.definition };
+}
+
+async function showDefinitions() {
+  if (!(SUPPORTED_LANGUAGES[CURRENT_LANGUAGE] || {}).definitions) return; // off for this language — see SUPPORTED_LANGUAGES
+  const panel = document.getElementById('definitions-panel');
+  if (!panel) return;
+
+  const words = Array.from(document.querySelectorAll('.row')).map(rowEl =>
+    Array.from(rowEl.querySelectorAll('.tile')).map(t => t.dataset.letter).join('')
+  ).filter(w => w && !w.includes(' ')); // skip empty rows and multi-word phrases (space-token puzzles) — Wiktionary looks up single terms
+
+  if (words.length === 0) return;
+
+  const results = await Promise.all(words.map(fetchWordDefinition));
+  const found = results.filter(r => r !== null);
+  if (found.length === 0) return; // e.g. an all-proper-noun themed puzzle with no matches — show nothing rather than an empty shell
+
+  const rows = found.map(r =>
+    `<div class="definition-row">` +
+      `<span class="definition-word">${r.word}</span>` +
+      (r.partOfSpeech ? `<span class="definition-pos">${r.partOfSpeech}</span>` : '') +
+      `<div class="definition-text">${r.definition}</div>` +
+    `</div>`
+  ).join('');
+
+  panel.innerHTML =
+    `<button id="definitions-toggle" onclick="toggleDefinitions()">Show word definitions ▾</button>` +
+    `<div id="definitions-list" style="display:none">${rows}` +
+    `<div class="definitions-credit">Definitions from <a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a>, used under <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA</a>.</div>` +
+    `</div>`;
+  panel.style.display = 'block';
+}
+
+function toggleDefinitions() {
+  const list = document.getElementById('definitions-list');
+  const btn = document.getElementById('definitions-toggle');
+  const showing = list.style.display !== 'none';
+  list.style.display = showing ? 'none' : 'block';
+  btn.textContent = showing ? 'Show word definitions ▾' : 'Hide word definitions ▴';
 }
 
 // ── Share result (copies a short shareable summary to the clipboard) ──
@@ -1624,15 +1908,27 @@ function closeEasyModal() {
   if (paused) togglePause();
 }
 
+function randomGameUrl(seed, lang = CURRENT_LANGUAGE) {
+  return `index.html?list=${lang}/wordlists/wordlist.txt&seed=${seed}`;
+}
+
+// Archive link for a past date with no curated file: the same word pool
+// and the same seed that date's live auto-generated puzzle used, so
+// opening it later gives exactly the puzzle everyone saw that day. The
+// real date rides along in ?date= for display.
+function autoGeneratedArchiveUrl(dateStr, lang = CURRENT_LANGUAGE) {
+  return `index.html?list=${fallbackWordlistForDate(dateStr, lang)}&seed=${dateSeedFor(dateStr, lang)}&date=${dateStr}`;
+}
+
 function startRandomGame() {
   const seed = Math.floor(Math.random() * MAX_PUBLIC_SEED) + 1;
-  window.location.href = `index.html?list=wordlists/wordlist.txt&seed=${seed}`;
+  window.location.href = randomGameUrl(seed);
 }
 
 // ── Easy Random: fresh random seed, offset into the easy range ──
 function startEasyRandomGame() {
   const displaySeed = Math.floor(Math.random() * MAX_PUBLIC_SEED) + 1;
-  window.location.href = `index.html?list=wordlists/wordlist.txt&seed=${displaySeed + EASY_SEED_OFFSET}`;
+  window.location.href = randomGameUrl(displaySeed + EASY_SEED_OFFSET);
 }
 
 let pendingEasySeed = false; // set before opening the puzzle-number modal so confirmPuzzleNumber() knows whether to add the easy offset
@@ -1679,7 +1975,7 @@ function confirmPuzzleNumber() {
     return;
   }
   const seed = pendingEasySeed ? displaySeed + EASY_SEED_OFFSET : displaySeed;
-  window.location.href = `index.html?list=wordlists/wordlist.txt&seed=${seed}`;
+  window.location.href = randomGameUrl(seed);
 }
 
 // ── Pause / resume ──
@@ -1802,7 +2098,7 @@ async function dailyFileExists(dateStr) {
   if (archiveFileCache.has(dateStr)) return archiveFileCache.get(dateStr);
   let exists = false;
   try {
-    const res = await fetch(`daily/${dateStr}.txt`, { method: 'HEAD', cache: 'no-store' });
+    const res = await fetch(`${CURRENT_LANGUAGE}/daily/${dateStr}.txt`, { method: 'HEAD', cache: 'no-store' });
     exists = res.ok;
   } catch (e) {}
   archiveFileCache.set(dateStr, exists);
@@ -1874,10 +2170,9 @@ async function renderArchiveCalendar() {
         closeArchive();
         const exists = await dailyFileExists(dateStr);
         if (exists) {
-          window.location.href = `index.html?list=daily/${dateStr}.txt`;
+          window.location.href = `index.html?list=${CURRENT_LANGUAGE}/daily/${dateStr}.txt`;
         } else {
-          const dateSeedInt = parseInt(dateStr.replace(/-/g, '')); // YYYYMMDD
-          window.location.href = `index.html?list=${fallbackWordlistForDate(dateStr)}&seed=${dateSeedInt}`;
+          window.location.href = autoGeneratedArchiveUrl(dateStr);
         }
       });
       checks.push(

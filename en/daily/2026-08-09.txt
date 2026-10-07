@@ -1,0 +1,24 @@
+#mode: static
+#title-reveal: Words selected form "Win-A-Trip 2026"
+#author: by Nicholas Kristof & Brunella Tipismana, The New York Times
+#subtitle: Puzzle for
+#alphabet: abcdefghijklmnopqrstuvwxyz
+#start-lines: 3
+#max-lines: 15
+#penalty: 2
+
+poverty
+addiction
+loneliness
+contempt
+isolation
+desperation
+nihilism
+powerlessness
+community
+recovery
+meritocracy
+inequality
+circumstance
+opportunity
+resilience

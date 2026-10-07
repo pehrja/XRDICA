@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
-// XRDICA v0.0.59
+// XRDICA v0.0.69
 
 // ── Word list loader ──
 // Fetches a .txt word list file and parses metadata headers.
@@ -46,7 +46,7 @@
 // #alphabet is specified). Words with spaces, digits, or other characters
 // are rejected unless #alphabet explicitly includes them.
 
-const DEFAULT_WORDLIST = 'wordlists/wordlist.txt'; // wordlists live in their own subfolder, separate from code
+const DEFAULT_WORDLIST = 'en/wordlists/wordlist.txt'; // defensive fallback only — every real call site in game.js always supplies an explicit, language-prefixed path; this is never reached in normal play
 const MIN_INITIAL_ROWS = 4; // never show fewer than this many rows at puzzle start —
                              // solving fewer this fast is vanishingly unlikely and
                              // treated as a sign something's off, not good play
@@ -60,7 +60,10 @@ const ACCENT_MAP = {
   'ù':'u','ú':'u','û':'u','ü':'u',
   'ý':'y','ÿ':'y',
   'ñ':'n','ç':'c','ß':'ss',
-  'æ':'ae','œ':'oe'
+  'æ':'ae','œ':'oe',
+  // Czech háčky/kroužek — folded to their base letters like every other accent
+  // (the original accent still shows on the tile once solved)
+  'č':'c','ď':'d','ě':'e','ň':'n','ř':'r','š':'s','ť':'t','ů':'u','ž':'z'
 };
 
 // Strip accents from a string, mapping to base letters

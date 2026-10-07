@@ -1,0 +1,24 @@
+#mode: static
+#title-reveal: French Words in English
+#author: Xrdica
+#date: 08102026
+#alphabet: abcdefghijklmnopqrstuvwxyz
+#start-lines: 3
+#max-lines: 15
+#penalty: 2
+
+renaissance
+ménagerie
+grenadier
+rapprochement
+boutique
+touché
+parkour
+restaurateur
+voyeur
+lingerie
+sommelier
+derrière
+toilette
+escargot
+façade

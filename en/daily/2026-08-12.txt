@@ -1,0 +1,41 @@
+#mode: static
+#title-reveal: 5-letter long world cities
+#author: Xrdica
+#date: 08122026
+#alphabet: abcdefghijklmnopqrstuvwxyz
+#start-lines: 3
+#max-lines: 15
+#penalty: 2
+
+Quito
+Paris
+Lagos
+Cairo
+Miami
+Abuja
+Dubai
+Fargo
+Osaka
+Tokyo
+Wuhan
+Yalta
+Luxor
+Kursk
+Haifa
+
+
+
+ménagerie
+grenadier
+rapprochement
+boutique
+touché
+parkour
+restaurateur
+voyeur
+lingerie
+sommelier
+derrière
+toilette
+escargot
+façade
