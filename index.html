@@ -1,4 +1,4 @@
-<!-- XRDICA v0.0.69 build 2026-10-08 -->
+<!-- XRDICA v0.0.70 build 2026-10-08 -->
 <!-- Copyright (c) 2025 Pehr Jansson. All rights reserved. -->
 <!DOCTYPE html>
 <html lang="en">
@@ -10,7 +10,7 @@
   <meta http-equiv="Expires" content="0" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Xrdica</title>
-  <link rel="stylesheet" href="style.css?v=19" />
+  <link rel="stylesheet" href="style.css?v=0.0.70" />
   <!-- Cloudflare Web Analytics -->
   <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "82b7df556d4a4347b88d3c927d8790b3"}'></script>
   <!-- End Cloudflare Web Analytics -->
@@ -172,10 +172,11 @@
     </a>
   </main>
 
-  <script src="loader.js?v=12"></script>
-  <script src="words.js?v=9"></script>
-  <script src="game.js?v=41"></script>
+  <!-- CACHE-BUSTING: the ?v= on these four files MUST change every release (bump it together with the XRDICA version). Browsers and Cloudflare cache each file by its full URL, so an unchanged ?v= keeps serving the OLD file while index.html is new. -->
+  <script src="loader.js?v=0.0.70"></script>
+  <script src="words.js?v=0.0.70"></script>
+  <script src="game.js?v=0.0.70"></script>
 
-  <footer id="version">XRDICA v0.0.69</footer>
+  <footer id="version">XRDICA v0.0.70</footer>
 </body>
 </html>
