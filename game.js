@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
-// XRDICA v0.0.73
+// XRDICA v0.0.74
 
 // ── Game state ──
 let WORD_LIST     = [];
@@ -851,7 +851,7 @@ function saveProgress() {
         locked: !!t.dataset.locked
       }))
     }));
-    const state = { score, timeScore, guessScore, totalRows, gameOver, rows };
+    const state = { score, timeScore, guessScore, totalRows, gameOver, rows, inputs: humanInputs };
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(state));
   } catch (e) { /* storage unavailable or full — progress just won't persist */ }
 }
@@ -897,6 +897,9 @@ function restoreProgress(saved) {
   score      = saved.score;
   timeScore  = saved.timeScore;
   guessScore = saved.guessScore;
+  // Keys pressed in earlier sittings count toward "attempted" too — without
+  // this, a puzzle played in several short sessions would never be counted.
+  humanInputs = saved.inputs || 0;
   document.getElementById('score-value').textContent = score;
   lastRowAddedAtScore = score; // don't immediately re-trigger a new row
 
