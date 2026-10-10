@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Pehr Jansson. All rights reserved.
 // Unauthorized use, copying, or distribution is strictly prohibited.
-// XRDICA v0.0.70
+// XRDICA v0.0.73
 
 // ── Game state ──
 let WORD_LIST     = [];
@@ -758,10 +758,21 @@ loadWithFallback().then(({ meta, words, cipherAlphabet, validChars, totalLines, 
   // Restore any saved progress for this exact puzzle (prevents reloading
   // the page from resetting score) — adds any extra rows already reached
   // and re-applies guesses/locks on top of the rows just built above.
-  restoreProgress(loadProgress());
+  restoringProgress = true;
+  try { restoreProgress(loadProgress()); } finally { restoringProgress = false; }
 
   scoreTimer = setInterval(() => addScore(1, 'time'), 5000);
+  // Phones: if the puzzle STARTS at its row cap, show the "all rows
+  // revealed" note before sizing, so the grid is sized with it in place.
+  if ((document.documentElement.clientWidth || window.innerWidth) < 520) updateMaxRowsNote();
   fitGridToScreen();
+  // The rest of this setup (e.g. showing the "Today's Puzzle" button) can
+  // make the header taller, which would leave the keyboard below the
+  // bottom of a phone screen. Re-fit once, after it all has settled.
+  // (Phones only — desktop layout is left exactly as it was.)
+  requestAnimationFrame(() => {
+    if ((document.documentElement.clientWidth || window.innerWidth) < 520) fitGridToScreen();
+  });
   // Update random button label based on current mode. If currently
   // viewing a random/easy puzzle (e.g. via a direct link or bookmark,
   // which still works even when modes are locked — see MODES_UNLOCKED
@@ -910,6 +921,43 @@ function restoreProgress(saved) {
   if (saved.gameOver) checkGameOver();
 }
 
+// ── Anonymous activity counting ──
+// Two events are counted, so the owner can tell real players from scanners
+// (a bot that only loads the page never triggers either):
+//   attempted — the score reached ATTEMPT_SCORE AND the player typed at
+//               least ATTEMPT_MIN_INPUTS keys (the timer alone adds a point
+//               every 5 seconds, so score by itself proves nothing)
+//   completed — the player solved every row in this session
+// Each is reported by requesting a tiny static file on this same site
+// (p/<event>-<language>.txt), which shows up in the Cloudflare request
+// analytics. No cookies, no personal data, no third party. Each puzzle
+// reports each event at most once per browser.
+const ATTEMPT_SCORE      = 25;
+const ATTEMPT_MIN_INPUTS = 10;
+const PING_HOSTS  = ['xrdica.com', 'www.xrdica.com']; // never count local testing
+const NOCOUNT_KEY = 'xrdica-nocount';  // ?count=0 stops counting THIS browser (the owner's own); ?count=1 undoes it
+const PINGED_KEY  = 'xrdica-pinged';
+const countParam  = urlParams.get('count');
+if (countParam === '0')      { try { localStorage.setItem(NOCOUNT_KEY, '1'); } catch (e) {} }
+else if (countParam === '1') { try { localStorage.removeItem(NOCOUNT_KEY); } catch (e) {} }
+let humanInputs = 0;            // keys the player actually pressed this session
+let attemptReported = false;
+let restoringProgress = false;  // true while a saved game is being reloaded
+
+function pingEvent(event) {
+  try {
+    if (PING_HOSTS.indexOf(location.hostname) === -1) return;
+    if (localStorage.getItem(NOCOUNT_KEY) === '1') return;
+    if (navigator.doNotTrack === '1' || window.doNotTrack === '1') return; // honor Do Not Track
+    const id   = PROGRESS_KEY + '|' + event;
+    const done = JSON.parse(localStorage.getItem(PINGED_KEY) || '[]');
+    if (done.indexOf(id) !== -1) return;
+    done.push(id);
+    localStorage.setItem(PINGED_KEY, JSON.stringify(done.slice(-300)));
+    fetch(`p/${event}-${CURRENT_LANGUAGE}.txt`, { cache: 'no-store', keepalive: true }).catch(() => {});
+  } catch (e) {}
+}
+
 // ── Scoring ──
 // category: 'time' for the passive +1/5s ticks, 'guess' for anything
 // driven by player action (keystrokes, GUESS correct/incorrect penalties)
@@ -919,6 +967,11 @@ function addScore(points, category = 'guess') {
   if (category === 'time') timeScore += points;
   else guessScore += points;
   document.getElementById('score-value').textContent = score;
+
+  if (!attemptReported && score >= ATTEMPT_SCORE && humanInputs >= ATTEMPT_MIN_INPUTS) {
+    attemptReported = true;
+    pingEvent('attempted');
+  }
 
   if (score - lastRowAddedAtScore >= NEW_ROW_EVERY) {
     if (GAME_MODE === 'random' && totalRows < MAX_ROWS) {
@@ -1063,8 +1116,17 @@ function addRow(r, forcedWord) {
   document.getElementById('grid').appendChild(rowWrap);
   totalRows++;
   checkRowIndirectlySolved(r);
-  fitGridToScreen();
-  updateMaxRowsNote();
+  // On a phone, show/hide the "all rows revealed" note BEFORE sizing the
+  // grid: it wraps to two lines there, and sizing first left the keyboard
+  // pushed off the bottom once the note appeared. Desktop keeps its
+  // original order so its layout doesn't shift.
+  if ((document.documentElement.clientWidth || window.innerWidth) < 520) {
+    updateMaxRowsNote();
+    fitGridToScreen();
+  } else {
+    fitGridToScreen();
+    updateMaxRowsNote();
+  }
 }
 
 // ── Show/hide the "all rows revealed" note ──
@@ -1173,6 +1235,25 @@ function keyboardLayout(alphabet) {
   return [...extraRows, ...rows];
 }
 
+// Key width comes from the REAL width of the screen, not a fixed minimum:
+// a fixed 36px key made an 11-key row 446px wide, which pushed the whole
+// page wider than a phone (clipping the keyboard and inflating
+// window.innerWidth, which the grid sizing then trusted). On a wide
+// screen this gives exactly the sizes it always did (36px, or 32px for
+// Swedish's 12-key row); on a phone the keys shrink to fit.
+let kbMaxKeys = 11;
+function sizeKeyboard() {
+  const keyboard = document.getElementById('keyboard');
+  if (!keyboard) return;
+  const vw    = document.documentElement.clientWidth || window.innerWidth || KB_MAX_ROW_PX;
+  const avail = Math.min(KB_MAX_ROW_PX, vw - 16);
+  const gap   = vw < 420 ? 4 : KB_GAP_PX;
+  const keyW  = Math.max(20, Math.min(36, Math.floor((avail - (kbMaxKeys - 1) * gap) / kbMaxKeys)));
+  keyboard.style.setProperty('--key-w', keyW + 'px');
+  keyboard.style.setProperty('--key-gap', gap + 'px');
+}
+window.addEventListener('resize', sizeKeyboard);
+
 function buildKeyboard(alphabet) {
   const keyboard = document.getElementById('keyboard');
   keyboard.innerHTML = '';
@@ -1180,13 +1261,10 @@ function buildKeyboard(alphabet) {
   const alphabetSet = new Set(alphabet);
   const qwertyRows  = keyboardLayout(alphabet);
 
-  // Size the keys so the longest row fits the same width a 10-letter
-  // English row always has — a 12-key Swedish row gets slightly narrower
-  // keys instead of running off the side.
+  // Size the keys so the longest row fits the screen (see sizeKeyboard).
   const visibleCount = row => row.filter(k => !(k.length === 1 && /[a-z]/.test(k) && !alphabetSet.has(k))).length;
-  const maxKeys = Math.max(...qwertyRows.map(visibleCount));
-  const keyW = Math.max(26, Math.min(36, Math.floor((KB_MAX_ROW_PX - (maxKeys - 1) * KB_GAP_PX) / maxKeys)));
-  keyboard.style.setProperty('--key-w', keyW + 'px');
+  kbMaxKeys = Math.max(...qwertyRows.map(visibleCount));
+  sizeKeyboard();
 
   qwertyRows.forEach(rowKeys => {
     const rowEl = document.createElement('div');
@@ -1262,6 +1340,7 @@ function handleKeyInput(k) {
     clearRedTiles();
     clearGuess(activeRow, activeCol);
     if (k !== ' ') moveActive('left');
+    humanInputs++;
     addScore(1);
     return;
   }
@@ -1276,6 +1355,7 @@ function handleKeyInput(k) {
     clearRedTiles();
     recordGuess(activeRow, activeCol, letter);
     advanceActive();
+    humanInputs++;
     addScore(1);
     updateKeyboard();
   }
@@ -1522,6 +1602,7 @@ function checkGameOver() {
   if (!allSolved) return;
   gameOver = true;
   clearInterval(scoreTimer);
+  if (!restoringProgress) pingEvent('completed'); // a reload of an already-finished puzzle is not a new completion
   updateMaxRowsNote(); // hide the "all rows revealed" note — final score is showing now
 
   const statsResult = recordGameCompletion(); // null if Easy Mode or already recorded (e.g. a reload)
@@ -1767,16 +1848,20 @@ function clearGuess(r, c) {
 // Scales tile size so the widest row fits within the viewport width,
 // also accounting for the keyboard and header height.
 function fitGridToScreen() {
-  const MIN_TILE  = 28;   // px — minimum tile size before scroll kicks in
+  // On a phone the page has far less side padding and no GUESS button, so
+  // the old fixed allowances (80px + 100px) threw away half the screen.
+  const vw        = document.documentElement.clientWidth || window.innerWidth;
+  const narrow    = vw < 520;
+  const MIN_TILE  = narrow ? 24 : 28;   // px — minimum tile size before scroll kicks in
   const MAX_TILE  = 52;   // px — default tile size
   const GAP       = 6;    // px — gap between tiles (matches CSS)
   const SPACE_W   = 16;   // px — word space width (matches CSS)
   const PUNCT_W   = 10;   // px — punctuation marker width (matches CSS)
-  const BTN_W     = 100;  // px — GUESS button width + gap
-  const PADDING   = 80;   // px — page left+right padding
+  const BTN_W     = narrow ? 0  : 100;  // px — GUESS button width + gap
+  const PADDING   = narrow ? 16 : 80;   // px — page left+right padding
   const MIN_HEADER_WIDTH = 480; // px — floor so header buttons always have room
 
-  const availableWidth = window.innerWidth - PADDING - BTN_W;
+  const availableWidth = vw - PADDING - BTN_W;
 
   // Find the widest row by measuring each child element type
   let maxTilesInRow = 0;
@@ -1810,7 +1895,7 @@ function fitGridToScreen() {
     // above) — still give the header a sane width rather than leaving
     // it at the loose CSS default, which renders oddly.
     const header = document.querySelector('header');
-    if (header) header.style.width = `${MIN_HEADER_WIDTH}px`;
+    if (header) header.style.width = `${Math.min(MIN_HEADER_WIDTH, vw - PADDING)}px`;
     return;
   }
 
@@ -1838,9 +1923,28 @@ function fitGridToScreen() {
   tileSize = Math.max(MIN_TILE, Math.min(MAX_TILE, tileSize));
 
   // Apply as CSS variables — font sizes scale with tile
-  document.documentElement.style.setProperty('--tile-size', `${tileSize}px`);
-  document.documentElement.style.setProperty('--tile-font', `${Math.max(9, Math.floor(tileSize * 0.45))}px`);
-  document.documentElement.style.setProperty('--cipher-font', `${Math.max(8, Math.floor(tileSize * 0.38))}px`);
+  const applyTileSize = size => {
+    document.documentElement.style.setProperty('--tile-size', `${size}px`);
+    document.documentElement.style.setProperty('--tile-font', `${Math.max(9, Math.floor(size * 0.45))}px`);
+    document.documentElement.style.setProperty('--cipher-font', `${Math.max(8, Math.floor(size * 0.38))}px`);
+  };
+  applyTileSize(tileSize);
+
+  // The height estimate above can't know every bit of padding and margin
+  // around the grid. On a phone, measure where the keyboard actually ended
+  // up and, if it is below the bottom of the screen, shrink the tiles by
+  // exactly the missing amount (never below MIN_TILE).
+  if (narrow && rowCount > 0 && tileSize > MIN_TILE && keyboard) {
+    // Measure the grid's NATURAL height — a cap left over from an earlier
+    // pass would hold the keyboard in place and hide the effect of shrinking.
+    const gridNow = document.getElementById('grid');
+    if (gridNow) gridNow.style.maxHeight = '';
+    const over = keyboard.getBoundingClientRect().bottom - window.innerHeight + 8;
+    if (over > 0) {
+      tileSize = Math.max(MIN_TILE, tileSize - Math.ceil(over / rowCount));
+      applyTileSize(tileSize);
+    }
+  }
 
   // Match the header's width to the widest row's actual rendered width,
   // so it visually centers over the grid's content instead of an
@@ -1850,7 +1954,7 @@ function fitGridToScreen() {
   // push the header wider than the page itself).
   if (header) {
     const widestRowWidth = maxTilesInRow * tileSize + maxNonTileWidth;
-    const maxHeaderWidth = window.innerWidth - PADDING;
+    const maxHeaderWidth = vw - PADDING;
     const boundedWidth = Math.min(Math.max(widestRowWidth, MIN_HEADER_WIDTH), maxHeaderWidth);
     header.style.width = `${boundedWidth}px`;
   }
@@ -1863,6 +1967,18 @@ function fitGridToScreen() {
   // the page with no way to scroll to it.
   const grid = document.getElementById('grid');
   if (grid) grid.style.maxHeight = `${Math.max(availableHeight, tileSize + ROW_GAP)}px`; // floor: always room for at least one row
+
+  // Phone safety net: if the keyboard STILL ends up below the bottom of the
+  // screen (tiles already at their minimum), take exactly the missing height
+  // out of the grid, which scrolls internally — the keyboard must stay
+  // reachable without scrolling the whole page.
+  if (narrow && grid && keyboard) {
+    const over2 = keyboard.getBoundingClientRect().bottom - window.innerHeight + 8;
+    if (over2 > 0) {
+      const cur = grid.getBoundingClientRect().height;
+      grid.style.maxHeight = `${Math.max(tileSize + ROW_GAP, Math.floor(cur - over2))}px`;
+    }
+  }
 }
 
 // Re-fit on window resize

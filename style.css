@@ -1,5 +1,5 @@
 /* Copyright (c) 2025 Pehr Jansson. All rights reserved. */
-/* XRDICA v0.0.70 */
+/* XRDICA v0.0.73 */
 
 /* ── Reset & base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -12,7 +12,9 @@ body {
   flex-direction: column;
   align-items: flex-start;
   height: 100vh;
+  height: 100dvh; /* dynamic viewport height — on phones plain 100vh includes the area behind the browser toolbar, which can hide the keyboard */
   max-height: 100vh;
+  max-height: 100dvh;
   overflow-x: auto;
   overflow-y: auto; /* safety net: if header+grid+keyboard together exceed the viewport for any reason, the page scrolls rather than clipping the keyboard with no way to reach it */
   padding: 16px 24px;
@@ -341,13 +343,12 @@ h1 {
   transition: background 0.2s, color 0.2s;
 }
 
-/* ── Language selector — placed just left of the About button, same
-   unobtrusive corner rather than crowding the main button row ── */
+/* ── Language selector — sits in the button row with Pause / Archive / Stats
+   (a corner-pinned menu collided with the title on narrow screens) ── */
 #lang-select {
-  position: absolute;
-  top: 16px;
-  right: 58px;
-  height: 34px;
+  margin-top: 8px;
+  vertical-align: top;
+  height: 30px;
   padding: 0 8px;
   border-radius: 10px;
   border: none;
@@ -356,6 +357,20 @@ h1 {
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
+}
+
+/* On a desktop-width window the menu stays where it always was — pinned in
+   the top-right corner beside the "?" — so the Pause / Archive / Stats row
+   stays centered under the title exactly as before. Only narrow windows
+   (phones, small tablets) put it in the button row. */
+@media (min-width: 640px) {
+  #lang-select {
+    position: absolute;
+    top: 16px;
+    right: 58px;
+    height: 34px;
+    margin-top: 0;
+  }
 }
 
 #about-btn:hover {
@@ -445,7 +460,7 @@ h1 {
 
 .kb-row {
   display: flex;
-  gap: 5px;
+  gap: var(--key-gap, 5px);
 }
 
 .key {
@@ -1038,3 +1053,30 @@ h1 {
 
 #archive-daily-btn:hover { background: #538d4e; color: #fff; }
 
+
+
+/* ── Mobile ── */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+/* No double-tap zoom (typing "ee" quickly must not zoom the page) and no
+   grey flash on every tap. */
+button, select, .key, .tile, #game-title {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Phone-sized page padding: 24px each side is a lot of a 360px screen */
+@media (max-width: 520px) {
+  body { padding: 10px 8px; }
+  header { margin-bottom: 14px; }
+  /* The corner-pinned version label lands on the Enter key on a phone —
+     let it sit below the keyboard instead. */
+  #version { position: static; align-self: center; padding: 4px 0 2px; }
+}
+
+/* Very small phones (320-380px): tighter key padding and type so a full row fits */
+@media (max-width: 380px) {
+  .key { padding: 0; font-size: 0.72rem; }
+  .key.key-back { font-size: 0.95rem; }
+  .key.wide { font-size: 0.6rem; }
+}
